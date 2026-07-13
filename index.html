@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="钓了么 - 基于实时气象、风况的智能钓鱼预测工具">
+    <meta name="description" data-i18n="meta_desc" content="钓了么 - 基于实时气象、风况的智能钓鱼预测工具">
     <meta name="theme-color" content="#0f172a">
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎣</text></svg>">
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
-    <title>钓了么 - 智能钓鱼预测</title>
+    <title data-i18n="title">钓了么 - 智能钓鱼预测</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Fonts -->
@@ -47,7 +47,7 @@
         .spinner { border:3px solid rgba(255,255,255,0.1); border-left-color:#38bdf8; border-radius:50%; width:28px; height:28px; animation:spin 1s linear infinite; }
         @keyframes spin { to{transform:rotate(360deg);} }
         
-        /* ==================== 高德地图样式 ==================== */
+        /* 地图样式 */
         #map {
             width: calc(100% + 2rem); 
             height: 400px; 
@@ -58,31 +58,16 @@
             overflow: hidden;
             background: white;
         }
+        .leaflet-container { background: white !important; }
+        .leaflet-control-attribution { background: rgba(255,255,255,0.8) !important; color: #555 !important; font-size: 10px; padding: 2px 4px !important; border: none !important; }
+        .glass-card, #temp-diff-container, .expert-tip-item { border-radius: 0 !important; }
+        .expert-tip-item { border-left-width: 3px; padding-left: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.05); }
 
-        .leaflet-container {
-            background: white !important;
-        }
-
-        .leaflet-control-attribution {
-            background: rgba(255, 255, 255, 0.8) !important;
-            color: #555 !important;
-            font-size: 10px;
-            padding: 2px 4px !important;
-            border: none !important;
-        }
-        
-        /* 移除所有卡片的圆角，但保留输入框和按钮的 */
-        .glass-card, #temp-diff-container, .expert-tip-item {
-            border-radius: 0 !important;
-        }
-
-        /* 专家建议区域的醒目样式 */
-        .expert-tip-item {
-            border-left-width: 3px;
-            padding-left: 12px;
-            margin-bottom: 12px;
-            background: rgba(255, 255, 255, 0.05);
-        }
+        /* Language Switcher */
+        .lang-btn { padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #94a3b8; transition: all 0.2s; }
+        .lang-btn:hover { border-color: rgba(255,255,255,0.3); color: #e2e8f0; }
+        .lang-btn.active { background: rgba(56,189,248,0.2); border-color: #38bdf8; color: #38bdf8; }
+        .lang-selector { display: flex; gap: 4px; align-items: center; }
     </style>
 </head>
 <body class="min-h-screen text-white pb-12 relative overflow-x-hidden">
@@ -96,9 +81,16 @@
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/40">
                     <i class="fas fa-fish text-white text-lg md:text-xl"></i>
                 </div>
-                <h1 class="text-2xl md:text-4xl font-bold tracking-tight">钓了么</h1>
+                <h1 class="text-2xl md:text-4xl font-bold tracking-tight" data-i18n="app_name">钓了么</h1>
             </div>
-            <p class="text-slate-400 text-xs md:text-sm">实时气象 · 风况 · 水文 · 智能预测</p>
+            <p class="text-slate-400 text-xs md:text-sm" data-i18n="header_sub">实时气象 · 风况 · 水文 · 智能预测</p>
+            <!-- Language Switcher -->
+            <div class="lang-selector justify-center mt-4">
+                <button class="lang-btn active" data-lang="zh">中文</button>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="ja">日本語</button>
+                <button class="lang-btn" data-lang="ko">한국어</button>
+            </div>
         </header>
         <main class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- 左侧主要输入区域 -->
@@ -107,41 +99,41 @@
                 <div class="glass-card p-4 md:p-6 fade-in-up" style="animation-delay:0.2s">
                     <div class="flex items-center gap-3 mb-4 md:mb-5 text-cyan-400">
                         <i class="fas fa-location-dot text-lg"></i>
-                        <h2 class="text-base font-semibold uppercase tracking-wider">基础设置</h2>
+                        <h2 class="text-base font-semibold uppercase tracking-wider" data-i18n="basic_settings">基础设置</h2>
                     </div>
                     <div class="space-y-4 md:space-y-5">
                         <div class="relative">
-                            <label for="location" class="block text-xs text-slate-400 mb-2">钓点位置</label>
+                            <label for="location" class="block text-xs text-slate-400 mb-2" data-i18n="spot_label">钓点位置</label>
                             <div class="flex gap-2 md:gap-3">
                                 <div class="relative flex-1">
                                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                                    <input id="location" type="text" placeholder="输入城市名，点击搜索" class="input-field w-full pl-12 py-3 rounded-xl text-sm placeholder-slate-500 focus:placeholder-slate-400">
+                                    <input id="location" type="text" data-i18n-placeholder="location_placeholder" placeholder="输入城市名，点击搜索" class="input-field w-full pl-12 py-3 rounded-xl text-sm placeholder-slate-500 focus:placeholder-slate-400">
                                 </div>
                                 <!-- 搜索/确定按钮 -->
-                                <button id="search-location-btn" class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 border border-white/10 flex items-center justify-center transition-all" title="搜索地点">
+                                <button id="search-location-btn" class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 border border-white/10 flex items-center justify-center transition-all" title="" data-i18n-title="search_title" data-i18n="search_btn">
                                     <i class="fas fa-search"></i>
                                 </button>
                                 <!-- GPS定位按钮 -->
-                                <button id="get-location" class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center transition-all" title="使用GPS定位">
+                                <button id="get-location" class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center transition-all" title="" data-i18n-title="gps_title">
                                     <i class="fas fa-crosshairs text-lg"></i>
                                 </button>
                             </div>
                         </div>
                         
-                        <!-- 地图模块：高德地图，无圆角，200m 精准视窗 -->
+                        <!-- 地图模块 -->
                         <div id="map"></div>
-                        <p class="text-xs text-slate-500 text-center mt-2"><i class="fas fa-satellite-dish"></i> 高德地图 · 200m 战术视图 · 点击任意位置更新</p>
+                        <p class="text-xs text-slate-500 text-center mt-2" data-i18n="map_hint"><i class="fas fa-satellite-dish"></i> 点击地图任意位置更新钓点</p>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs text-slate-400 mb-2">水域类型</label>
+                                <label class="block text-xs text-slate-400 mb-2" data-i18n="water_type_label">水域类型</label>
                                 <select id="fishing-type" class="input-field w-full px-4 py-3 rounded-xl text-sm appearance-none">
-                                    <option value="freshwater">淡水钓</option>
-                                    <option value="saltwater">海钓</option>
+                                    <option value="freshwater" data-i18n="freshwater">淡水钓</option>
+                                    <option value="saltwater" data-i18n="saltwater">海钓</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="time" class="block text-xs text-slate-400 mb-2">出钓时间</label>
+                                <label for="time" class="block text-xs text-slate-400 mb-2" data-i18n="time_label">出钓时间</label>
                                 <input id="time" type="datetime-local" class="input-field w-full px-4 py-3 rounded-xl text-sm">
                             </div>
                         </div>
@@ -152,39 +144,37 @@
                     <div class="flex items-center justify-between mb-4 md:mb-5">
                         <div class="flex items-center gap-3 text-cyan-400">
                             <i class="fas fa-sliders text-lg"></i>
-                            <h2 class="text-base font-semibold uppercase tracking-wider">实时环境参数</h2>
+                            <h2 class="text-base font-semibold uppercase tracking-wider" data-i18n="env_params">实时环境参数</h2>
                         </div>
-                        <span class="text-xs text-slate-500">自动获取</span>
+                        <span class="text-xs text-slate-500" data-i18n="auto_fetch">自动获取</span>
                     </div>
                     <div class="space-y-4">
                         <div class="input-field w-full px-4 py-3 rounded-xl text-sm text-cyan-300 flex flex-wrap items-center justify-between gap-3">
                             <div class="flex items-center gap-2"><i class="fas fa-cloud-sun"></i> <span id="weather-text">--</span></div>
-                            <div class="flex items-center gap-2"><i class="fas fa-wind"></i> <span id="wind-level">-- 级</span></div>
+                            <div class="flex items-center gap-2"><i class="fas fa-wind"></i> <span id="wind-level">--</span></div>
                             <div class="flex items-center gap-2"><i class="fas fa-compass"></i> <span id="wind-direction">--</span></div>
                             <div class="flex items-center gap-2"><i class="fas fa-gauge-high"></i> <span id="pressure-value">--</span> hPa</div>
                             <div class="flex items-center gap-2"><i class="fas fa-temperature-low"></i> <span id="water-temp-value">--</span> °C</div>
                         </div>
-                        <p class="text-xs text-slate-400 text-center">数据基于 <span id="location-display">历史定位</span> 的实时气象</p>
+                        <p class="text-xs text-slate-400 text-center" data-i18n="data_based_on">数据基于 <span id="location-display">--</span> 的实时气象</p>
                     </div>
                 </div>
                 <!-- 温差分析提示 -->
                 <div id="temp-diff-container" class="glass-card p-4 hidden fade-in-up">
                     <div class="flex items-center gap-3 text-amber-400">
                         <i class="fas fa-temperature-high text-lg"></i>
-                        <h3 class="text-sm font-semibold">未来一周温差分析</h3>
+                        <h3 class="text-sm font-semibold" data-i18n="weekly_temp_analysis">未来一周温差分析</h3>
                     </div>
-                    <div id="temp-diff-content" class="text-xs text-slate-300 mt-2">
-                        <!-- 内容由JS动态生成 -->
-                    </div>
+                    <div id="temp-diff-content" class="text-xs text-slate-300 mt-2"></div>
                 </div>
                 <!-- 主按钮 -->
                 <button id="calculate-btn" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold py-3 md:py-4 rounded-xl shadow-lg shadow-cyan-500/30 transition-all duration-300 transform active:scale-95">
-                    <i class="fas fa-wand-magic-sparkles mr-2"></i> 开始智能预测
+                    <i class="fas fa-wand-magic-sparkles mr-2"></i> <span data-i18n="calc_btn">开始智能预测</span>
                 </button>
                 <!-- 加载动画 -->
                 <div id="loading" class="hidden glass-card p-6 text-center">
                     <div class="spinner mx-auto mb-4"></div>
-                    <p class="text-slate-300">正在获取实时气象与一周温差数据...</p>
+                    <p data-i18n="loading_text" class="text-slate-300">正在获取实时气象与一周温差数据...</p>
                 </div>
             </section>
             
@@ -192,39 +182,631 @@
             <section class="lg:col-span-5 space-y-6 order-1 lg:order-2">
                 <!-- 预测指数 -->
                 <div class="glass-card p-4 md:p-6 relative overflow-hidden fade-in-up" style="animation-delay:0.4s">
-                    <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3 md:mb-4">预测指数</h3>
+                    <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3 md:mb-4" data-i18n="prediction_index">预测指数</h3>
                     <div class="flex items-baseline gap-3 mb-4 md:mb-6">
                         <span id="score" class="text-6xl md:text-7xl font-black tracking-tighter text-white">--</span>
                         <span class="text-xl text-slate-500 font-medium">/100</span>
                     </div>
-                    <div id="result-message" class="px-4 py-2 rounded-lg text-sm font-medium text-center bg-white/5 border border-white/10 mb-6 md:mb-8">
+                    <div id="result-message" class="px-4 py-2 rounded-lg text-sm font-medium text-center bg-white/5 border border-white/10 mb-6 md:mb-8" data-i18n="enter_data_hint">
                         请输入数据开始预测
                     </div>
                     <div class="space-y-4 md:space-y-5">
-                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400">时间因素</span><span id="time-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="time-progress" class="progress-fill w-0"></div></div></div>
-                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400">天气因素</span><span id="weather-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="weather-progress" class="progress-fill w-0"></div></div></div>
-                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400">风况因素</span><span id="wind-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="wind-progress" class="progress-fill w-0"></div></div></div>
-                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400">气压因素</span><span id="pressure-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="pressure-progress" class="progress-fill w-0"></div></div></div>
-                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400">水温因素</span><span id="water-temp-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="water-temp-progress" class="progress-fill w-0"></div></div></div>
+                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400" data-i18n="factor_time">时间因素</span><span id="time-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="time-progress" class="progress-fill w-0"></div></div></div>
+                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400" data-i18n="factor_weather">天气因素</span><span id="weather-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="weather-progress" class="progress-fill w-0"></div></div></div>
+                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400" data-i18n="factor_wind">风况因素</span><span id="wind-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="wind-progress" class="progress-fill w-0"></div></div></div>
+                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400" data-i18n="factor_pressure">气压因素</span><span id="pressure-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="pressure-progress" class="progress-fill w-0"></div></div></div>
+                        <div class="factor"><div class="flex justify-between text-xs mb-1"><span class="text-slate-400" data-i18n="factor_watertemp">水温因素</span><span id="water-temp-factor" class="font-mono font-bold">--</span></div><div class="progress-bar"><div id="water-temp-progress" class="progress-fill w-0"></div></div></div>
                     </div>
                 </div>
                 <!-- 专家建议 -->
                 <div class="glass-card p-4 md:p-6 border-l-4 border-l-yellow-500 fade-in-up" style="animation-delay:0.5s">
                     <div class="flex items-center gap-3 mb-3 md:mb-4">
                         <i class="fas fa-lightbulb text-yellow-400 text-xl md:text-2xl"></i>
-                        <h3 class="text-yellow-400 font-semibold text-lg">专家建议</h3>
+                        <h3 class="text-yellow-400 font-semibold text-lg" data-i18n="expert_advice">专家建议</h3>
                     </div>
                     <div id="expert-tips" class="text-sm text-slate-200 space-y-3 md:space-y-4 mt-3">
-                        <p>正在加载地图数据...</p>
+                        <p data-i18n="loading_map">正在加载地图数据...</p>
                     </div>
                 </div>
             </section>
         </main>
-        <footer class="text-center mt-8 md:mt-12 text-slate-600 text-xs">
+        <footer class="text-center mt-8 md:mt-12 text-slate-600 text-xs" data-i18n="footer_text">
             © 2026 钓了么 | 仅供娱乐参考，实际钓鱼请结合当地水情与安全
         </footer>
     </div>
     <script>
+        // ==================== i18n 多语言引擎 ====================
+        const LANGUAGES = {
+            zh: {
+                // Meta
+                meta_desc: "钓了么 - 基于实时气象、风况的智能钓鱼预测工具",
+                title: "钓了么 - 智能钓鱼预测",
+                app_name: "钓了么",
+                header_sub: "实时气象 · 风况 · 水文 · 智能预测",
+                
+                // Settings
+                basic_settings: "基础设置",
+                spot_label: "钓点位置",
+                location_placeholder: "输入城市名或地址搜索",
+                search_btn: "",
+                search_title: "搜索地点",
+                gps_title: "使用GPS定位",
+                map_hint: '<i class="fas fa-satellite-dish"></i> 点击地图任意位置更新钓点',
+                water_type_label: "水域类型",
+                freshwater: "淡水钓",
+                saltwater: "海钓",
+                time_label: "出钓时间",
+                
+                // Environment
+                env_params: "实时环境参数",
+                auto_fetch: "自动获取",
+                data_based_on: '数据基于 <span id="location-display">--</span> 的实时气象',
+                weekly_temp_analysis: "未来一周温差分析",
+                
+                // Buttons
+                calc_btn: "开始智能预测",
+                loading_text: "正在获取实时气象与一周温差数据...",
+                
+                // Prediction
+                prediction_index: "预测指数",
+                enter_data_hint: "请输入数据开始预测",
+                factor_time: "时间因素",
+                factor_weather: "天气因素",
+                factor_wind: "风况因素",
+                factor_pressure: "气压因素",
+                factor_watertemp: "水温因素",
+                
+                expert_advice: "专家建议",
+                loading_map: "正在加载地图数据...",
+                footer_text: "© 2026 钓了么 | 仅供娱乐参考，实际钓鱼请结合当地水情与安全",
+
+                // Result messages
+                result_excellent: "🎯 爆护预警！绝佳时机！",
+                result_good: "🐟 鱼情不错，值得一战！",
+                result_fair: "⚖️ 条件一般，需耐心等待",
+                result_poor: "😴 鱼口较差，建议换天",
+
+                // Weather
+                weather_0: "晴朗",
+                weather_1: "晴间多云",
+                weather_2: "多云",
+                weather_3: "阴天",
+                weather_45: "有雾",
+                weather_48: "大雾",
+                weather_51: "小毛毛雨",
+                weather_53: "毛毛雨",
+                weather_55: "大毛毛雨",
+                weather_56: "冻毛毛雨",
+                weather_57: "大冻毛毛雨",
+                weather_61: "小雨",
+                weather_63: "中雨",
+                weather_65: "大雨",
+                weather_66: "冻雨",
+                weather_67: "大冻雨",
+                weather_71: "小雪",
+                weather_73: "中雪",
+                weather_75: "大雪",
+                weather_77: "雪粒",
+                weather_80: "小阵雨",
+                weather_81: "中阵雨",
+                weather_82: "大阵雨",
+                weather_85: "小阵雪",
+                weather_86: "大阵雪",
+                weather_95: "雷暴",
+                weather_96: "雷暴伴冰雹",
+                weather_99: "强烈雷暴",
+                weather_unknown: "未知天气",
+
+                // Wind
+                wind_0: "无风",
+                wind_1: "1级轻风",
+                wind_2: "2级轻风",
+                wind_3: "3级和风",
+                wind_4: "4级和风",
+                wind_5: "5级劲风",
+                wind_6: "6级强风",
+                wind_7: "≥7级大风",
+                wind_level: "{level}级 ({text})",
+
+                // Wind directions
+                dir_N: "北",
+                dir_NE: "东北",
+                dir_E: "东",
+                dir_SE: "东南",
+                dir_S: "南",
+                dir_SW: "西南",
+                dir_W: "西",
+                dir_NW: "西北",
+
+                // Error messages
+                err_unknown: "发生未知错误，请稍后再试",
+                err_network: "网络连接失败，请检查网络",
+                err_rate_limit: "API调用频率过高，请稍等1分钟",
+                err_location_not_found: "未能找到该位置，请检查拼写",
+                err_weather_unavailable: "天气数据暂不可用，使用默认值",
+                err_no_location: "请先输入位置或使用定位",
+                err_select_time: "请选择有效时间",
+
+                // Location labels
+                label_custom: "自定义坐标",
+                label_gps: "GPS定位",
+                label_history: "历史定位",
+                restored_data: "已恢复上次的钓点数据。",
+
+                // Temp diff
+                temp_warning: '警告：',
+                temp_caution: '注意：',
+                temp_stable: '稳定：',
+                temp_warning_text: '未来一周温差较大（最大日温差 {diff}°C）。鱼类可能因水温波动导致活性不稳定，建议选择温差较小的时段出钓。',
+                temp_caution_text: '未来一周有温差变化（最大日温差 {diff}°C），出钓时请关注水温变化趋势。',
+                temp_stable_text: '未来一周温差适宜（最大日温差 {diff}°C），水温稳定有利于鱼类活动。',
+
+                // Expert tips - detailed
+                tip_temp_high: '<span class="text-rose-400 font-semibold"><i class="fas fa-temperature-high"></i> 高温差预警：</span> 水温骤降导致"温跃层"下压。鱼群已大范围撤离上层，<strong>必须钓远、钓深</strong>（建议3米以上），避免浅滩无效窝。',
+                tip_temp_medium: '<span class="text-amber-400 font-semibold"><i class="fas fa-temperature-half"></i> 温差提示：</span> 未来几天有明显温差，鱼类可能停口。建议在温度相对稳定的清晨或傍晚，寻找深浅交界处作钓。',
+                tip_temp_low: '<span class="text-emerald-400 font-semibold"><i class="fas fa-snowflake"></i> 温差稳定：</span> 近期水温波动小，是出钓的好时机。鱼类活性较为持续，可灵活选择钓位。',
+                tip_pos_windy: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 风力强劲，鱼群避浪。建议寻找<strong>背风湾</strong>、<strong>洄水湾</strong>或障碍物后的静水区，这些区域溶氧高且避风。',
+                tip_pos_rainy: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 雨天溶氧增加，食物被冲入下游。重点关注<strong>进水口</strong>、<strong>闸下</strong>、<strong>汇流处</strong>及浅滩弯道。',
+                tip_pos_hot: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 水温过高，鱼趋阴凉。建议作钓于<strong>深潭</strong>、<strong>树荫下</strong>或<strong>水草茂盛</strong>的阴凉处。',
+                tip_pos_cold: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 水温偏低，鱼群集中在深水区。建议寻找<strong>深坑</strong>、<strong>主河道</strong>或<strong>深水湾</strong>。',
+                tip_pos_normal: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 气候平稳。建议选择<strong>深浅交界处</strong>、<strong>水草区边缘</strong>或<strong>水下障碍物</strong>（如倒树、乱石堆）旁。',
+                tip_depth_cold: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深建议：</span> 建议钓<strong>2-4米</strong>深水区，采用底钓，搜索鱼窝。',
+                tip_depth_hot: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深建议：</span> 建议钓<strong>0.5-1.5米</strong>中上层或阴凉处，采用钓浮或行程钓法。',
+                tip_depth_windy: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深建议：</span> 建议钓<strong>1.5-3米</strong>，长竿短线在背风处作钓。',
+                tip_depth_normal: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深建议：</span> 建议钓<strong>1-2.5米</strong>，采用底钓结合浮钓，灵活搜索。',
+                tip_bait_rainy: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 饵料选择：</span> 雨天水体浑浊，推荐腥香浓郁饵料：红虫、蚯蚓、商品饵加腥味雪花粉。',
+                tip_bait_windy: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 饵料选择：</span> 有风时鱼警觉性高，推荐自然饵或腥味较轻的商品饵（如麝香、虾粉）。',
+                tip_bait_hot: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 饵料选择：</span> 高温季节鱼口轻，建议清淡饵或活饵：玉米、蚯蚓、草鱼用青草。',
+                tip_bait_normal: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 饵料选择：</span> 常规天气推荐经典组合：商品饵料（如基础粉末）+麝香+虾粉，或红虫+蚯蚓。',
+                tip_saltwater: '<span class="text-indigo-400 font-semibold"><i class="fas fa-anchor"></i> 海钓提示：</span> 海钓建议使用沙虫、虾、蟹饵，注意潮汐变化（本系统已结合气象条件进行分析）。',
+                tip_none: "暂无特别建议，祝你爆护！",
+
+                // Map
+                map_attribution: '© 高德地图',
+            },
+            en: {
+                meta_desc: "FishCast - Smart fishing forecast based on real-time weather, wind, and water conditions",
+                title: "FishCast - Smart Fishing Forecast",
+                app_name: "FishCast",
+                header_sub: "Weather · Wind · Water · Smart Prediction",
+                basic_settings: "Basic Settings",
+                spot_label: "Fishing Spot",
+                location_placeholder: "Search city or address",
+                search_btn: "",
+                search_title: "Search location",
+                gps_title: "Use GPS",
+                map_hint: '<i class="fas fa-satellite-dish"></i> Click anywhere on the map to set spot',
+                water_type_label: "Water Type",
+                freshwater: "Freshwater",
+                saltwater: "Saltwater",
+                time_label: "Fishing Time",
+                env_params: "Live Environment",
+                auto_fetch: "Auto",
+                data_based_on: 'Data based on <span id="location-display">--</span>',
+                weekly_temp_analysis: "7-Day Temperature Analysis",
+                calc_btn: "Start Prediction",
+                loading_text: "Fetching weather data & 7-day forecast...",
+                prediction_index: "Prediction Score",
+                enter_data_hint: "Enter data to start prediction",
+                factor_time: "Time",
+                factor_weather: "Weather",
+                factor_wind: "Wind",
+                factor_pressure: "Pressure",
+                factor_watertemp: "Water Temp",
+                expert_advice: "Expert Tips",
+                loading_map: "Loading map data...",
+                footer_text: "© 2026 FishCast | For reference only. Always check local conditions and stay safe.",
+                result_excellent: "🎯 Prime Time! Fish are biting!",
+                result_good: "🐟 Good conditions, worth a try!",
+                result_fair: "⚖️ Fair conditions, patience needed",
+                result_poor: "😴 Poor conditions, try another day",
+                weather_0: "Clear",
+                weather_1: "Partly Cloudy",
+                weather_2: "Cloudy",
+                weather_3: "Overcast",
+                weather_45: "Foggy",
+                weather_48: "Dense Fog",
+                weather_51: "Light Drizzle",
+                weather_53: "Drizzle",
+                weather_55: "Heavy Drizzle",
+                weather_56: "Freezing Drizzle",
+                weather_57: "Heavy Freezing Drizzle",
+                weather_61: "Light Rain",
+                weather_63: "Moderate Rain",
+                weather_65: "Heavy Rain",
+                weather_66: "Freezing Rain",
+                weather_67: "Heavy Freezing Rain",
+                weather_71: "Light Snow",
+                weather_73: "Moderate Snow",
+                weather_75: "Heavy Snow",
+                weather_77: "Snow Grains",
+                weather_80: "Light Showers",
+                weather_81: "Moderate Showers",
+                weather_82: "Heavy Showers",
+                weather_85: "Light Snow Showers",
+                weather_86: "Heavy Snow Showers",
+                weather_95: "Thunderstorm",
+                weather_96: "Thunderstorm with Hail",
+                weather_99: "Severe Thunderstorm",
+                weather_unknown: "Unknown",
+                wind_0: "Calm",
+                wind_1: "Light Air",
+                wind_2: "Light Breeze",
+                wind_3: "Gentle Breeze",
+                wind_4: "Moderate Breeze",
+                wind_5: "Fresh Breeze",
+                wind_6: "Strong Breeze",
+                wind_7: "≥ Gale Force",
+                wind_level: "Level {level} ({text})",
+                dir_N: "N",
+                dir_NE: "NE",
+                dir_E: "E",
+                dir_SE: "SE",
+                dir_S: "S",
+                dir_SW: "SW",
+                dir_W: "W",
+                dir_NW: "NW",
+                err_unknown: "An unknown error occurred. Please try again.",
+                err_network: "Network connection failed. Check your connection.",
+                err_rate_limit: "API rate limit exceeded. Please wait 1 minute.",
+                err_location_not_found: "Location not found. Check your spelling.",
+                err_weather_unavailable: "Weather data unavailable. Using defaults.",
+                err_no_location: "Please enter a location or use GPS.",
+                err_select_time: "Please select a valid time.",
+                label_custom: "Custom Location",
+                label_gps: "GPS Location",
+                label_history: "Last Location",
+                restored_data: "Last fishing spot restored.",
+                temp_warning: 'Warning:',
+                temp_caution: 'Caution:',
+                temp_stable: 'Stable:',
+                temp_warning_text: 'Large temperature swings ahead (max daily diff {diff}°C). Fish activity may be unstable. Choose milder periods.',
+                temp_caution_text: 'Moderate temp changes ahead (max daily diff {diff}°C). Watch water temperature trends.',
+                temp_stable_text: 'Stable temps ahead (max daily diff {diff}°C). Favorable for fish activity.',
+                tip_temp_high: '<span class="text-rose-400 font-semibold"><i class="fas fa-temperature-high"></i> Temp Warning:</span> Rapid cooling pushes thermocline deeper. Fish have left surface waters. <strong>Fish far and deep</strong> (3m+), avoid shallow areas.',
+                tip_temp_medium: '<span class="text-amber-400 font-semibold"><i class="fas fa-temperature-half"></i> Temp Alert:</span> Notable temp swings ahead, fish may pause feeding. Try stable mornings/evenings at depth transition zones.',
+                tip_temp_low: '<span class="text-emerald-400 font-semibold"><i class="fas fa-snowflake"></i> Stable Temps:</span> Minimal temp fluctuation ahead. Great time to fish. Fish activity should remain consistent.',
+                tip_pos_windy: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> Location:</span> Strong winds push fish to shelter. Look for <strong>lee shores</strong>, <strong>eddies</strong>, or structure-protected calm areas — high oxygen, low waves.',
+                tip_pos_rainy: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> Location:</span> Rain increases oxygen and washes in food. Focus on <strong>inlets</strong>, <strong>culverts</strong>, <strong>confluences</strong>, and shallow bends.',
+                tip_pos_hot: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> Location:</span> Water too warm — fish seek shade. Try <strong>deep holes</strong>, <strong>under trees</strong>, or <strong>dense weed beds</strong>.',
+                tip_pos_cold: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> Location:</span> Cold water pushes fish deep. Target <strong>deep channels</strong>, <strong>main riverbeds</strong>, or <strong>deep bays</strong>.',
+                tip_pos_normal: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> Location:</span> Stable conditions. Try <strong>depth transitions</strong>, <strong>weed edges</strong>, or <strong>underwater structures</strong> (fallen trees, rock piles).',
+                tip_depth_cold: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> Depth:</span> Fish <strong>2-4m</strong> deep water. Bottom fish and search for fish clusters.',
+                tip_depth_hot: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> Depth:</span> Fish <strong>0.5-1.5m</strong> mid-to-upper layers or shade. Use float or drift rigs.',
+                tip_depth_windy: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> Depth:</span> Fish <strong>1.5-3m</strong> with long rod, short line in lee areas.',
+                tip_depth_normal: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> Depth:</span> Fish <strong>1-2.5m</strong>. Combine bottom and float fishing for best coverage.',
+                tip_bait_rainy: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> Bait:</span> Rain muddies water — use strong scents: bloodworms, earthworms, or scented commercial bait.',
+                tip_bait_windy: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> Bait:</span> Wind makes fish cautious. Use natural bait or light-scented options (musk, shrimp powder).',
+                tip_bait_hot: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> Bait:</span> Hot weather = light bites. Go light: corn, worms, grass for grass carp.',
+                tip_bait_normal: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> Bait:</span> Classic combo: commercial base + musk + shrimp powder, or bloodworms + earthworms.',
+                tip_saltwater: '<span class="text-indigo-400 font-semibold"><i class="fas fa-anchor"></i> Saltwater:</span> Use sandworms, shrimp, or crab bait. Watch tide changes (system factors this in).',
+                tip_none: "No special tips. Tight lines!",
+                map_attribution: '© AutoNavi',
+            },
+            ja: {
+                meta_desc: "釣り予報 - リアルタイム気象・風況に基づくスマート釣り予測ツール",
+                title: "釣り予報 - スマート釣り予測",
+                app_name: "釣り予報",
+                header_sub: "気象 · 風況 · 水温 · スマート予測",
+                basic_settings: "基本設定",
+                spot_label: "釣り場",
+                location_placeholder: "都市名または住所を入力",
+                search_btn: "",
+                search_title: "場所を検索",
+                gps_title: "GPSを使用",
+                map_hint: '<i class="fas fa-satellite-dish"></i> マップをクリックして釣り場を設定',
+                water_type_label: "水域タイプ",
+                freshwater: "淡水",
+                saltwater: "海水",
+                time_label: "釣行時間",
+                env_params: "リアルタイム環境",
+                auto_fetch: "自動取得",
+                data_based_on: '<span id="location-display">--</span> の気象データに基づく',
+                weekly_temp_analysis: "週間気温分析",
+                calc_btn: "予測を開始",
+                loading_text: "気象データと週間予報を取得中...",
+                prediction_index: "予測スコア",
+                enter_data_hint: "データを入力して予測を開始",
+                factor_time: "時間",
+                factor_weather: "天気",
+                factor_wind: "風",
+                factor_pressure: "気圧",
+                factor_watertemp: "水温",
+                expert_advice: "専門家のアドバイス",
+                loading_map: "マップデータを読み込み中...",
+                footer_text: "© 2026 釣り予報 | 参考情報です。実際の釣りは現地の状況を確認し安全第一で。",
+                result_excellent: "🎯 絶好の釣り日和！",
+                result_good: "🐟 好条件、挑戦の価値あり！",
+                result_fair: "⚖️ 普通の条件、忍耐が必要",
+                result_poor: "😴 不向きな日、別の日に挑戦を",
+                weather_0: "晴れ",
+                weather_1: "晴れ時々曇り",
+                weather_2: "曇り",
+                weather_3: "曇り(厚い)",
+                weather_45: "霧",
+                weather_48: "濃霧",
+                weather_51: "小雨",
+                weather_53: "霧雨",
+                weather_55: "強い霧雨",
+                weather_56: "凍結霧雨",
+                weather_57: "強い凍結霧雨",
+                weather_61: "小雨",
+                weather_63: "中雨",
+                weather_65: "大雨",
+                weather_66: "凍結雨",
+                weather_67: "強い凍結雨",
+                weather_71: "小雪",
+                weather_73: "中雪",
+                weather_75: "大雪",
+                weather_77: "霰",
+                weather_80: "弱いにわか雨",
+                weather_81: "中程度のにわか雨",
+                weather_82: "強いにわか雨",
+                weather_85: "弱い雪",
+                weather_86: "強い雪",
+                weather_95: "雷雨",
+                weather_96: "雷雨(雹あり)",
+                weather_99: "激しい雷雨",
+                weather_unknown: "不明",
+                wind_0: "無風",
+                wind_1: "軽風(1)",
+                wind_2: "軽風(2)",
+                wind_3: "軟風(3)",
+                wind_4: "和風(4)",
+                wind_5: "疾風(5)",
+                wind_6: "強風(6)",
+                wind_7: "≥大風(7)",
+                wind_level: "{level}級 ({text})",
+                dir_N: "北",
+                dir_NE: "北東",
+                dir_E: "東",
+                dir_SE: "南東",
+                dir_S: "南",
+                dir_SW: "南西",
+                dir_W: "西",
+                dir_NW: "北西",
+                err_unknown: "エラーが発生しました。もう一度お試しください。",
+                err_network: "ネットワーク接続に失敗しました。",
+                err_rate_limit: "API制限に達しました。1分待ってください。",
+                err_location_not_found: "場所が見つかりません。スペルを確認してください。",
+                err_weather_unavailable: "気象データが利用できません。デフォルト値を使用します。",
+                err_no_location: "場所を入力するかGPSを使用してください。",
+                err_select_time: "有効な時間を選択してください。",
+                label_custom: "カスタム座標",
+                label_gps: "GPS位置",
+                label_history: "前回の位置",
+                restored_data: "前回の釣り場データを復元しました。",
+                temp_warning: '警告：',
+                temp_caution: '注意：',
+                temp_stable: '安定：',
+                temp_warning_text: '週間の気温差が大きいです（最大日差 {diff}°C）。水温変動で魚の活性が不安定になる可能性があります。',
+                temp_caution_text: '週間に気温差があります（最大日差 {diff}°C）。水温変化に注意して釣行してください。',
+                temp_stable_text: '週間の気温差が適切です（最大日差 {diff}°C）。魚の活動に安定した条件です。',
+                tip_temp_high: '<span class="text-rose-400 font-semibold"><i class="fas fa-temperature-high"></i> 気温差注意：</span> 水温急変でサーモクラインが深くなっています。魚は表層から離れました。<strong>遠く深く</strong>（3m以上）を狙ってください。',
+                tip_temp_medium: '<span class="text-amber-400 font-semibold"><i class="fas fa-temperature-half"></i> 気温差注意：</span> 数日間気温差が大きく、魚の活性が下がる可能性があります。安定した早朝か夕方に深浅境界を狙いましょう。',
+                tip_temp_low: '<span class="text-emerald-400 font-semibold"><i class="fas fa-snowflake"></i> 安定傾向：</span> 水温変動が少なく、釣りに最適な時期です。魚の活性は持続します。',
+                tip_pos_windy: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 場所選び：</span> 強風のため魚は避難場所を求めてます。<strong>風裏の湾</strong>、<strong>よどみ</strong>、障害物の後ろなど静かな場所を探しましょう。',
+                tip_pos_rainy: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 場所選び：</span> 雨で溶存酸素が増え、エサが流れ込みます。<strong>流入口</strong>、<strong>水門下</strong>、<strong>合流点</strong>がおすすめ。',
+                tip_pos_hot: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 場所選び：</span> 水温が高すぎて魚は日陰を求めてます。<strong>深み</strong>、<strong>木陰</strong>、<strong>水草の茂み</strong>を狙いましょう。',
+                tip_pos_cold: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 場所選び：</span> 水温が低く、魚は深場に集まっています。<strong>深み</strong>、<strong>本流</strong>、<strong>深い湾</strong>を探しましょう。',
+                tip_pos_normal: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 場所選び：</span> 安定した気候。<strong>深浅境界</strong>、<strong>水草の縁</strong>、<strong>水中構造物</strong>（倒木、岩場）をおすすめします。',
+                tip_depth_cold: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深：</span> <strong>2-4m</strong>の深場を底釣りで狙ってください。',
+                tip_depth_hot: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深：</span> <strong>0.5-1.5m</strong>の中上層または日陰を浮き釣りで。',
+                tip_depth_windy: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深：</span> <strong>1.5-3m</strong>を風裏で長竿短糸で狙いましょう。',
+                tip_depth_normal: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深：</span> <strong>1-2.5m</strong>を底釣りと浮き釣りで柔軟に探りましょう。',
+                tip_bait_rainy: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> エサ：</span> 雨で水が濁っています。赤虫、ミミズ、または匂いの強い練り餌が効果的。',
+                tip_bait_windy: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> エサ：</span> 風で魚は警戒します。自然餌か軽い香りの餌（麝香、エビ粉など）を。',
+                tip_bait_hot: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> エサ：</span> 高温期は軽めの餌：トウモロコシ、ミミズ、草魚には草。',
+                tip_bait_normal: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> エサ：</span> 基本の組み合わせ：ベース粉末＋麝香＋エビ粉、または赤虫＋ミミズ。',
+                tip_saltwater: '<span class="text-indigo-400 font-semibold"><i class="fas fa-anchor"></i> 海釣り：</span> 砂虫、エビ、カニ餌をおすすめ。潮汐の変化に注意（システムが考慮済み）。',
+                tip_none: "特別なアドバイスはありません。大漁を祈ります！",
+                map_attribution: '© AutoNavi',
+            },
+            ko: {
+                meta_desc: "낚시예보 - 실시간 기상·풍황 기반 스마트 낚시 예측 도구",
+                title: "낚시예보 - 스마트 낚시 예측",
+                app_name: "낚시예보",
+                header_sub: "기상 · 풍향 · 수온 · 스마트 예측",
+                basic_settings: "기본 설정",
+                spot_label: "낚시 포인트",
+                location_placeholder: "도시명 또는 주소 검색",
+                search_btn: "",
+                search_title: "장소 검색",
+                gps_title: "GPS 사용",
+                map_hint: '<i class="fas fa-satellite-dish"></i> 지도를 클릭하여 포인트 설정',
+                water_type_label: "수역 유형",
+                freshwater: "담수",
+                saltwater: "해수",
+                time_label: "낚시 시간",
+                env_params: "실시간 환경",
+                auto_fetch: "자동",
+                data_based_on: '<span id="location-display">--</span> 기반 실시간 기상',
+                weekly_temp_analysis: "주간 기온 분석",
+                calc_btn: "예측 시작",
+                loading_text: "기상 데이터 및 주간 예보 불러오는 중...",
+                prediction_index: "예측 지수",
+                enter_data_hint: "데이터를 입력하여 예측 시작",
+                factor_time: "시간",
+                factor_weather: "날씨",
+                factor_wind: "바람",
+                factor_pressure: "기압",
+                factor_watertemp: "수온",
+                expert_advice: "전문가 조언",
+                loading_map: "지도 데이터 로딩 중...",
+                footer_text: "© 2026 낚시예보 | 참고용입니다. 현지 상황을 확인하고 안전에 유의하세요.",
+                result_excellent: "🎯 최고의 낚시 조건!",
+                result_good: "🐟 좋은 조건, 도전할 만함!",
+                result_fair: "⚖️ 보통 조건, 인내심 필요",
+                result_poor: "😴 좋지 않은 날, 다른 날에 도전",
+                weather_0: "맑음",
+                weather_1: "구름 조금",
+                weather_2: "구름 많음",
+                weather_3: "흐림",
+                weather_45: "안개",
+                weather_48: "짙은 안개",
+                weather_51: "약한 이슬비",
+                weather_53: "이슬비",
+                weather_55: "강한 이슬비",
+                weather_56: "어는 이슬비",
+                weather_57: "강한 어는 이슬비",
+                weather_61: "약한 비",
+                weather_63: "중간 비",
+                weather_65: "강한 비",
+                weather_66: "어는 비",
+                weather_67: "강한 어는 비",
+                weather_71: "약한 눈",
+                weather_73: "중간 눈",
+                weather_75: "강한 눈",
+                weather_77: "싸락눈",
+                weather_80: "약한 소나기",
+                weather_81: "중간 소나기",
+                weather_82: "강한 소나기",
+                weather_85: "약한 소낙눈",
+                weather_86: "강한 소낙눈",
+                weather_95: "뇌우",
+                weather_96: "뇌우(우박)",
+                weather_99: "심한 뇌우",
+                weather_unknown: "알 수 없음",
+                wind_0: "무풍",
+                wind_1: "실바람(1)",
+                wind_2: "남실바람(2)",
+                wind_3: "산들바람(3)",
+                wind_4: "건들바람(4)",
+                wind_5: "흔들바람(5)",
+                wind_6: "강풍(6)",
+                wind_7: "≥큰바람(7)",
+                wind_level: "{level}급 ({text})",
+                dir_N: "북",
+                dir_NE: "북동",
+                dir_E: "동",
+                dir_SE: "남동",
+                dir_S: "남",
+                dir_SW: "남서",
+                dir_W: "서",
+                dir_NW: "북서",
+                err_unknown: "알 수 없는 오류가 발생했습니다. 다시 시도하세요.",
+                err_network: "네트워크 연결 실패. 연결을 확인하세요.",
+                err_rate_limit: "API 호출 제한 초과. 1분 후 시도하세요.",
+                err_location_not_found: "위치를 찾을 수 없습니다. 철자를 확인하세요.",
+                err_weather_unavailable: "날씨 데이터를 불러올 수 없습니다. 기본값 사용.",
+                err_no_location: "위치를 입력하거나 GPS를 사용하세요.",
+                err_select_time: "유효한 시간을 선택하세요.",
+                label_custom: "사용자 정의 좌표",
+                label_gps: "GPS 위치",
+                label_history: "이전 위치",
+                restored_data: "이전 낚시 포인트를 복원했습니다.",
+                temp_warning: '경고：',
+                temp_caution: '주의：',
+                temp_stable: '안정：',
+                temp_warning_text: '주간 일교차가 큽니다（최대 {diff}°C）。수온 변동으로 어류 활동이 불안정할 수 있습니다.',
+                temp_caution_text: '주간 일교차가 있습니다（최대 {diff}°C）。수온 변화를 주시하세요.',
+                temp_stable_text: '주간 일교차가 적절합니다（최대 {diff}°C）。수온 안정으로 어류 활동에 유리합니다.',
+                tip_temp_high: '<span class="text-rose-400 font-semibold"><i class="fas fa-temperature-high"></i> 기온차 경고：</span> 수온 급변으로 수온약층이 깊어졌습니다. 물고기는 표층을 떠났습니다.<strong>멀리 깊게</strong>（3m 이상）를 노리세요.',
+                tip_temp_medium: '<span class="text-amber-400 font-semibold"><i class="fas fa-temperature-half"></i> 기온차 주의：</span> 며칠간 기온차가 커 물고기 활동이 줄어들 수 있습니다. 안정된 아침이나 저녁에 수심 경계를 노리세요.',
+                tip_temp_low: '<span class="text-emerald-400 font-semibold"><i class="fas fa-snowflake"></i> 기온 안정：</span> 수온 변동이 적어 낚시하기 좋은 시기입니다. 물고기 활동이 지속적입니다.',
+                tip_pos_windy: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 위치 선택：</span> 강풍으로 물고기가 피신처를 찾습니다.<strong>바람막이 만</strong>、<strong>소용돌이</strong>、장애물 뒤의 고요한 곳을 찾으세요.',
+                tip_pos_rainy: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 위치 선택：</span> 비로 용존산소가 증가하고 먹이가 흘러듭니다.<strong>유입구</strong>、<strong>수문 아래</strong>、<strong>합류점</strong>을 추천합니다.',
+                tip_pos_hot: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 위치 선택：</span> 수온이 너무 높아 물고기가 그늘을 찾습니다.<strong>깊은 소</strong>、<strong>나무 그늘</strong>、<strong>수초 밀집 지역</strong>을 노리세요.',
+                tip_pos_cold: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 위치 선택：</span> 수온이 낮아 물고기가 깊은 곳에 모입니다.<strong>깊은 구멍</strong>、<strong>본류</strong>、<strong>깊은 만</strong>을 찾으세요.',
+                tip_pos_normal: '<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 위치 선택：</span> 기후 안정.<strong>수심 경계</strong>、<strong>수초 가장자리</strong>、<strong>수중 구조물</strong>（쓰러진 나무, 바위 더미）을 추천합니다.',
+                tip_depth_cold: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 수심 추천：</span> <strong>2-4m</strong> 깊은 곳을 바닥 낚시로 노리세요.',
+                tip_depth_hot: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 수심 추천：</span> <strong>0.5-1.5m</strong> 중상층 또는 그늘을 뜰채 낚시로.',
+                tip_depth_windy: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 수심 추천：</span> <strong>1.5-3m</strong>를 바람막이에서 긴 낚시대로 노리세요.',
+                tip_depth_normal: '<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 수심 추천：</span> <strong>1-2.5m</strong>를 바닥과 뜰채 낚시로 유연하게 탐색하세요.',
+                tip_bait_rainy: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 미끼 선택：</span> 비로 물이 탁해집니다. 붉은벌레, 지렁이, 또는 강한 냄새의 상품 미끼를 추천.',
+                tip_bait_windy: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 미끼 선택：</span> 바람에 물고기가 경계합니다. 자연 미끼나 가벼운 냄새의 미끼（사향, 새우가루）를.',
+                tip_bait_hot: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 미끼 선택：</span> 고온기에는 가벼운 미끼: 옥수수, 지렁이, 초어에는 풀.',
+                tip_bait_normal: '<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 미끼 선택：</span> 기본 조합：베이스 파우더＋사향＋새우가루, 또는 붉은벌레＋지렁이.',
+                tip_saltwater: '<span class="text-indigo-400 font-semibold"><i class="fas fa-anchor"></i> 바다 낚시：</span> 모래벌레, 새우, 게 미끼 추천. 조수 변화에 주의（시스템이 반영했습니다）.',
+                tip_none: "특별한 조언이 없습니다. 대박 나세요!",
+                map_attribution: '© AutoNavi',
+            }
+        };
+
+        let currentLang = localStorage.getItem('fishcast_lang') || 'zh';
+
+        function t(key, replacements) {
+            const dict = LANGUAGES[currentLang] || LANGUAGES.zh;
+            let val = dict[key];
+            if (val === undefined) val = LANGUAGES.zh[key] || key;
+            if (replacements) {
+                for (const [k, v] of Object.entries(replacements)) {
+                    val = val.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+                }
+            }
+            return val;
+        }
+
+        function applyTranslations() {
+            // 更新所有 data-i18n 文本元素
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (el.tagName === 'OPTION') {
+                    el.textContent = t(key);
+                } else if (!el.querySelector('span') && !el.querySelector('i')) {
+                    // 纯文本元素直接替换
+                    el.innerHTML = t(key);
+                } else {
+                    // 含子元素的，只替换文本节点
+                    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+                    let node;
+                    while (node = walker.nextNode()) {
+                        if (node.parentElement && node.parentElement.getAttribute('data-i18n') === key) {
+                            node.textContent = t(key);
+                        }
+                    }
+                }
+            });
+            // 更新 data-i18n-placeholder
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+            });
+            // 更新 data-i18n-title
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                el.title = t(el.getAttribute('data-i18n-title'));
+            });
+            // 更新 title
+            document.title = t('title');
+            // 更新 meta description
+            const metaDesc = document.querySelector('meta[name="description"]');
+            if (metaDesc) metaDesc.content = t('meta_desc');
+            // 更新 lang 切换按钮高亮
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === currentLang);
+            });
+            // 重绘地图 attribution 如果地图已初始化
+            if (typeof map !== 'undefined' && map) {
+                map.eachLayer(layer => {
+                    if (layer instanceof L.TileLayer) {
+                        layer.options.attribution = t('map_attribution');
+                    }
+                });
+            }
+        }
+
+        function setLanguage(lang) {
+            if (!LANGUAGES[lang]) return;
+            currentLang = lang;
+            localStorage.setItem('fishcast_lang', lang);
+            applyTranslations();
+            // 重新计算预测结果中的文字（如果有结果显示）
+            const scoreEl = document.getElementById('score');
+            if (scoreEl && scoreEl.textContent !== '--') {
+                const score = parseInt(scoreEl.textContent);
+                const msg = getMessage(score);
+                document.getElementById('result-message').textContent = msg.t;
+            }
+        }
+
+        // 语言切换事件
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+            });
+            // 初始化翻译
+            setLanguage(currentLang);
+        });
+
         // ==================== 配置 ====================
         const AMAP_KEY = '4156f446d0e20e7e20b4c686a45ffa14';
         const AMAP_GEOCODE_BASE = 'https://restapi.amap.com/v3/geocode/geo';
@@ -242,20 +824,20 @@
                    'bg-gradient-to-r from-rose-500 to-red-600';
         }
         function getMessage(s) {
-            if(s>=85) return {t:"🎯 爆护预警！绝佳时机！", c:'text-emerald-400 bg-emerald-950/30 border-emerald-500/30'};
-            if(s>=70) return {t:"🐟 鱼情不错，值得一战！", c:'text-cyan-400 bg-cyan-950/30 border-cyan-500/30'};
-            if(s>=50) return {t:"⚖️ 条件一般，需耐心等待", c:'text-yellow-400 bg-yellow-950/30 border-yellow-500/30'};
-            return {t:"😴 鱼口较差，建议换天", c:'text-rose-400 bg-rose-950/30 border-rose-500/30'};
+            if(s>=85) return {t:t("result_excellent"), c:'text-emerald-400 bg-emerald-950/30 border-emerald-500/30'};
+            if(s>=70) return {t:t("result_good"), c:'text-cyan-400 bg-cyan-950/30 border-cyan-500/30'};
+            if(s>=50) return {t:t("result_fair"), c:'text-yellow-400 bg-yellow-950/30 border-yellow-500/30'};
+            return {t:t("result_poor"), c:'text-rose-400 bg-rose-950/30 border-rose-500/30'};
         }
         
         // ==================== 统一错误处理 ====================
         function handleApiError(err, ctx='操作') {
             console.error(`API Error [${ctx}]:`, err);
-            let msg = '发生未知错误，请稍后再试';
-            if(err.message.includes('fetch')) msg = '网络连接失败，请检查网络';
-            else if(err.message.includes('429')) msg = 'API调用频率过高，请稍等1分钟';
-            else if(err.message.includes('位置未找到')) msg = '未能找到该位置，请检查拼写';
-            else if(err.message.includes('天气数据')) msg = '天气数据暂不可用，使用默认值';
+            let msg = t('err_unknown');
+            if(err.message.includes('fetch')) msg = t('err_network');
+            else if(err.message.includes('429')) msg = t('err_rate_limit');
+            else if(err.message.includes('位置未找到') || err.message.includes('Location') || err.message.includes('場所') || err.message.includes('위치')) msg = t('err_location_not_found');
+            else if(err.message.includes('天气') || err.message.includes('weather') || err.message.includes('気象') || err.message.includes('날씨')) msg = t('err_weather_unavailable');
             const el = $('result-message');
             el.textContent = msg;
             el.className = `px-4 py-2 rounded-lg text-sm font-medium text-center border bg-rose-500/10 border-rose-500/30 text-rose-300 mb-8`;
@@ -263,22 +845,22 @@
         
         // ==================== 数据映射 ====================
         function windSpeedToLevel(speed) {
-            if(speed < 1) return {level:0, text:'无风'};
-            if(speed < 6) return {level:1, text:'1级轻风'};
-            if(speed < 11) return {level:2, text:'2级轻风'};
-            if(speed < 16) return {level:3, text:'3级和风'};
-            if(speed < 21) return {level:4, text:'4级和风'};
-            if(speed < 28) return {level:5, text:'5级劲风'};
-            if(speed < 34) return {level:6, text:'6级强风'};
-            return {level:7, text:'≥7级大风'};
+            if(speed < 1) return {level:0, text:t('wind_0')};
+            if(speed < 6) return {level:1, text:t('wind_1')};
+            if(speed < 11) return {level:2, text:t('wind_2')};
+            if(speed < 16) return {level:3, text:t('wind_3')};
+            if(speed < 21) return {level:4, text:t('wind_4')};
+            if(speed < 28) return {level:5, text:t('wind_5')};
+            if(speed < 34) return {level:6, text:t('wind_6')};
+            return {level:7, text:t('wind_7')};
         }
         function windDirectionToText(deg) {
-            const dirs = ['北','东北','东','东南','南','西南','西','西北'];
+            const dirs = [t('dir_N'), t('dir_NE'), t('dir_E'), t('dir_SE'), t('dir_S'), t('dir_SW'), t('dir_W'), t('dir_NW')];
             return dirs[Math.round(deg / 45) % 8];
         }
         function mapWeatherCodeToScore(code) {
-            if([0,1,2,3].includes(code)) return 90; // 晴~阴
-            if([45,48].includes(code)) return 40; // 雾
+            if([0,1,2,3].includes(code)) return 90;
+            if([45,48].includes(code)) return 40;
             if([51,53,55,56,57,61,63,65,66,67].includes(code)) return code<=61?80:code<=65?60:30;
             if([71,73,75,77,85,86].includes(code)) return 50;
             if([80,81,82,95,96,99].includes(code)) return code<=82?70:20;
@@ -298,12 +880,12 @@
                 const res = await fetch(url);
                 const data = await res.json();
                 if(data.status !== '1' || !data.geocodes || data.geocodes.length === 0) {
-                    throw new Error('位置未找到');
+                    throw new Error(t('err_location_not_found'));
                 }
                 const location = data.geocodes[0].location.split(',');
                 return {lat: parseFloat(location[1]), lon: parseFloat(location[0])};
             } catch(e){ 
-                console.error('高德地理编码失败:', e);
+                console.error('Geocode failed:', e);
                 handleApiError(e,'位置'); 
                 return null; 
             }
@@ -317,9 +899,9 @@
                 if(data.status === '1' && data.regeocode) {
                     return data.regeocode.formatted_address;
                 }
-                return `Lat: ${lat.toFixed(2)}, Lon: ${lon.toFixed(2)}`;
+                return `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
             } catch {
-                return `Lat: ${lat.toFixed(2)}, Lon: ${lon.toFixed(2)}`;
+                return `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
             }
         }
         
@@ -371,7 +953,7 @@
                 }
                 return { singleDayMax: 0, weeklyAvgDiff: 0 };
             } catch(e) {
-                console.warn("一周温差数据获取失败:", e);
+                console.warn("Weekly temp data failed:", e);
                 return { singleDayMax: 0, weeklyAvgDiff: 0 };
             }
         }
@@ -381,7 +963,7 @@
         let marker;
         let currentCoords = null;
 
-        // 自定义发光图标 (改为荧光绿色)
+        // 自定义发光图标
         const myIcon = L.divIcon({
             className: 'custom-div-icon',
             html: `<div style="
@@ -397,11 +979,9 @@
         });
 
         function initMap() {
-            // 优先加载历史位置，否则默认北京
             const savedLat = localStorage.getItem('lastLat');
             const savedLon = localStorage.getItem('lastLon');
             const startView = (savedLat && savedLon) ? [savedLat, savedLon] : [39.9042, 116.4074];
-            
             const startZoom = (savedLat && savedLon) ? 13.5 : 5;
 
             map = L.map('map', {
@@ -409,13 +989,11 @@
                 attributionControl: true
             }).setView(startView, startZoom);
             
-            // 使用高德地图瓦片服务
             L.tileLayer('https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
-                attribution: '© 高德地图',
+                attribution: t('map_attribution'),
                 maxZoom: 18,
             }).addTo(map);
 
-            // 地图点击事件
             map.on('click', async function(e) {
                 const { lat, lng } = e.latlng;
                 updateMapMarker(lat, lng);
@@ -429,7 +1007,6 @@
             } else {
                 marker = L.marker([lat, lng], { icon: myIcon }).addTo(map);
             }
-            
             map.setView([lat, lng], 16.5);
         }
 
@@ -442,8 +1019,8 @@
                 $('location').value = address;
                 $('location-display').textContent = address;
             } catch (e) {
-                $('location').value = `Lat: ${lat.toFixed(2)}, Lon: ${lng.toFixed(2)}`;
-                $('location-display').textContent = "自定义坐标";
+                $('location').value = `${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+                $('location-display').textContent = t('label_custom');
             }
             
             currentCoords = { lat, lon: lng };
@@ -462,16 +1039,12 @@
         }
         function updateWindDisplay(speed, dir) {
             const {level, text} = windSpeedToLevel(speed);
-            $('wind-level').textContent = `${level}级 (${text})`;
-            $('wind-direction').textContent = windDirectionToText(dir);
+            $('wind-level').textContent = t('wind_level', {level, text});
         }
         function updateWeatherText(code) {
-            const text = {
-                0:'晴朗',1:'晴间多云',2:'多云',3:'阴天',
-                45:'有雾',61:'小雨',63:'中雨',65:'大雨',
-                95:'雷暴',71:'小雪'
-            }[code] || '未知天气';
-            $('weather-text').textContent = text;
+            const key = 'weather_' + code;
+            const text = t(key);
+            $('weather-text').textContent = text === key ? t('weather_unknown') : text;
         }
         
         // 更新温差分析UI
@@ -482,18 +1055,18 @@
             if (diffData.singleDayMax > 0) {
                 container.classList.remove('hidden');
                 
-                let diffText = '';
                 let diffColor = 'text-slate-300';
+                let diffText = '';
                 
                 if (diffData.singleDayMax >= 12) {
                     diffColor = 'text-rose-400';
-                    diffText = `<p><i class="fas fa-exclamation-triangle"></i> <strong>警告：</strong>未来一周温差较大（最大日温差 ${diffData.singleDayMax}°C）。鱼类可能因水温波动导致活性不稳定，建议选择温差较小的时段出钓。</p>`;
+                    diffText = `<p><i class="fas fa-exclamation-triangle"></i> <strong>${t('temp_warning')}</strong> ${t('temp_warning_text', {diff: diffData.singleDayMax})}</p>`;
                 } else if (diffData.singleDayMax >= 8) {
                     diffColor = 'text-amber-400';
-                    diffText = `<p><i class="fas fa-exclamation-circle"></i> <strong>注意：</strong>未来一周有温差变化（最大日温差 ${diffData.singleDayMax}°C），出钓时请关注水温变化趋势。</p>`;
+                    diffText = `<p><i class="fas fa-exclamation-circle"></i> <strong>${t('temp_caution')}</strong> ${t('temp_caution_text', {diff: diffData.singleDayMax})}</p>`;
                 } else {
                     diffColor = 'text-emerald-400';
-                    diffText = `<p><i class="fas fa-check-circle"></i> <strong>稳定：</strong>未来一周温差适宜（最大日温差 ${diffData.singleDayMax}°C），水温稳定有利于鱼类活动。</p>`;
+                    diffText = `<p><i class="fas fa-check-circle"></i> <strong>${t('temp_stable')}</strong> ${t('temp_stable_text', {diff: diffData.singleDayMax})}</p>`;
                 }
                 
                 content.innerHTML = `<div class="${diffColor}">${diffText}</div>`;
@@ -508,49 +1081,49 @@
             const { singleDayMax } = tempDiffData || {};
             
             if (singleDayMax && singleDayMax >= 12) {
-                tips.push(`<span class="text-rose-400 font-semibold"><i class="fas fa-temperature-high"></i> 高温差预警：</span> 水温骤降导致"温跃层"下压。鱼群已大范围撤离上层，**必须钓远、钓深**（建议3米以上），避免浅滩无效窝。</span>`);
+                tips.push(t('tip_temp_high'));
             } else if (singleDayMax && singleDayMax >= 8) {
-                tips.push(`<span class="text-amber-400 font-semibold"><i class="fas fa-temperature-half"></i> 温差提示：</span> 未来几天有明显温差，鱼类可能停口。建议在温度相对稳定的清晨或傍晚，寻找深浅交界处作钓。</span>`);
+                tips.push(t('tip_temp_medium'));
             } else {
-                tips.push(`<span class="text-emerald-400 font-semibold"><i class="fas fa-snowflake"></i> 温差稳定：</span> 近期水温波动小，是出钓的好时机。鱼类活性较为持续，可灵活选择钓位。</span>`);
+                tips.push(t('tip_temp_low'));
             }
 
             if(windLevel >= 5) {
-                tips.push(`<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 风力强劲，鱼群避浪。建议寻找**背风湾**、**洄水湾**或障碍物后的静水区，这些区域溶氧高且避风。</span>`);
+                tips.push(t('tip_pos_windy'));
             } else if(weatherCode >= 61 && weatherCode <= 65) {
-                tips.push(`<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 雨天溶氧增加，食物被冲入下游。重点关注**进水口**、**闸下**、**汇流处**及浅滩弯道。</span>`);
+                tips.push(t('tip_pos_rainy'));
             } else if(waterTemp > 28) {
-                tips.push(`<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 水温过高，鱼趋阴凉。建议作钓于**深潭**、**树荫下**或**水草茂盛**的阴凉处。</span>`);
+                tips.push(t('tip_pos_hot'));
             } else if(waterTemp < 12) {
-                tips.push(`<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 水温偏低，鱼群集中在深水区。建议寻找**深坑**、**主河道**或**深水湾**。</span>`);
+                tips.push(t('tip_pos_cold'));
             } else {
-                tips.push(`<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> 位置选择：</span> 气候平稳。建议选择**深浅交界处**、**水草区边缘**或**水下障碍物**（如倒树、乱石堆）旁。</span>`);
+                tips.push(t('tip_pos_normal'));
             }
 
             if(waterTemp < 12) {
-                tips.push(`<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深建议：</span> 建议钓**2-4米**深水区，采用底钓，搜索鱼窝。</span>`);
+                tips.push(t('tip_depth_cold'));
             } else if(waterTemp > 28) {
-                tips.push(`<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深建议：</span> 建议钓**0.5-1.5米**中上层或阴凉处，采用钓浮或行程钓法。</span>`);
+                tips.push(t('tip_depth_hot'));
             } else if(windLevel >= 5) {
-                tips.push(`<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深建议：</span> 建议钓**1.5-3米**，长竿短线在背风处作钓。</span>`);
+                tips.push(t('tip_depth_windy'));
             } else {
-                tips.push(`<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> 水深建议：</span> 建议钓**1-2.5米**，采用底钓结合浮钓，灵活搜索。</span>`);
+                tips.push(t('tip_depth_normal'));
             }
             
-            if(weatherCode >= 61 && weatherCode <= 65) { // 雨天
-                tips.push(`<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 饵料选择：</span> 雨天水体浑浊，推荐腥香浓郁饵料：红虫、蚯蚓、商品饵加腥味雪花粉。</span>`);
+            if(weatherCode >= 61 && weatherCode <= 65) {
+                tips.push(t('tip_bait_rainy'));
             } else if(windLevel >= 4) {
-                tips.push(`<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 饵料选择：</span> 有风时鱼警觉性高，推荐自然饵或腥味较轻的商品饵（如麝香、虾粉）。</span>`);
+                tips.push(t('tip_bait_windy'));
             } else if(waterTemp > 25) {
-                tips.push(`<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 饵料选择：</span> 高温季节鱼口轻，建议清淡饵或活饵：玉米、蚯蚓、草鱼用青草。</span>`);
+                tips.push(t('tip_bait_hot'));
             } else {
-                tips.push(`<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> 饵料选择：</span> 常规天气推荐经典组合：商品饵料（如基础粉末）+麝香+虾粉，或红虫+蚯蚓。</span>`);
+                tips.push(t('tip_bait_normal'));
             }
             
             if(isSaltwater) {
-                tips.push(`<span class="text-indigo-400 font-semibold"><i class="fas fa-anchor"></i> 海钓提示：</span> 海钓建议使用沙虫、虾、蟹饵，注意潮汐变化（本系统已结合气象条件进行分析）。</span>`);
+                tips.push(t('tip_saltwater'));
             }
-            return tips.length ? tips : ["<p>暂无特别建议，祝你爆护！</p>"];
+            return tips.length ? tips : [t('tip_none')];
         }
         
         // ==================== 主逻辑 ====================
@@ -573,7 +1146,7 @@
                 const loc = $('location').value.trim();
                 if(loc){
                     const coords = await getCoords(loc);
-                    if(!coords) throw new Error('位置未找到');
+                    if(!coords) throw new Error(t('err_location_not_found'));
                     currentCoords = coords; lat = coords.lat; lon = coords.lon;
                     $('location-display').textContent = loc;
                     updateMapMarker(lat, lon);
@@ -581,9 +1154,9 @@
                     localStorage.setItem('lastLon', lon);
                 } else if(currentCoords){
                     ({lat, lon} = currentCoords);
-                    $('location-display').textContent = "自定义坐标";
+                    $('location-display').textContent = t('label_custom');
                 } else {
-                    throw new Error('请先输入位置或使用定位');
+                    throw new Error(t('err_no_location'));
                 }
                 
                 const [weatherData, tempDiffData] = await Promise.all([
@@ -595,13 +1168,13 @@
                 updateWeatherText(weatherData.weatherCode);
                 $('water-temp-value').textContent = weatherData.waterTemp;
                 const windInfo = windSpeedToLevel(weatherData.windSpeed);
-                $('wind-level').textContent = `${windInfo.level}级 (${windInfo.text})`;
+                $('wind-level').textContent = t('wind_level', {level: windInfo.level, text: windInfo.text});
                 $('wind-direction').textContent = windDirectionToText(weatherData.windDir);
                 
                 updateTempDiffUI(tempDiffData);
 
                 const dt = new Date($('time').value);
-                if(isNaN(dt.getTime())) throw new Error('请选择有效时间');
+                if(isNaN(dt.getTime())) throw new Error(t('err_select_time'));
                 const hour = dt.getHours();
                 const p = weatherData.pressure;
                 const wt = weatherData.waterTemp;
@@ -665,9 +1238,9 @@
             if(savedLat && savedLon) {
                 currentCoords = { lat: parseFloat(savedLat), lon: parseFloat(savedLon) };
                 updateMapMarker(currentCoords.lat, currentCoords.lon);
-                $('location-display').textContent = "历史定位";
+                $('location-display').textContent = t('label_history');
                 syncEnvData();
-                $('expert-tips').innerHTML = "<p>已恢复上次的钓点数据。</p>";
+                $('expert-tips').innerHTML = "<p>" + t('restored_data') + "</p>";
             }
 
             const executeLocationSearch = async () => {
@@ -712,7 +1285,7 @@
                     const pos = await new Promise((r,j)=>navigator.geolocation.getCurrentPosition(r,j,{timeout:8000}));
                     currentCoords = {lat:pos.coords.latitude, lon:pos.coords.longitude};
                     $('location').value = await reverseGeocode(currentCoords.lat, currentCoords.lon);
-                    $('location-display').textContent = "GPS定位";
+                    $('location-display').textContent = t('label_gps');
                     updateMapMarker(currentCoords.lat, currentCoords.lon);
                     localStorage.setItem('lastLat', currentCoords.lat);
                     localStorage.setItem('lastLon', currentCoords.lon);
@@ -722,6 +1295,13 @@
             });
             
             $('calculate-btn').addEventListener('click', calculatePrediction);
+
+            // 语言切换按钮绑定
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+            });
+            // 应用初始语言
+            setLanguage(currentLang);
         });
     </script>
 </body>
