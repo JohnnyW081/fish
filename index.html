@@ -137,6 +137,22 @@
                                 <input id="time" type="datetime-local" class="input-field w-full px-4 py-3 rounded-xl text-sm">
                             </div>
                         </div>
+                        <div class="mt-4">
+                            <label class="block text-xs text-slate-400 mb-2" data-i18n="target_species">目标鱼种</label>
+                            <select id="fish-species" class="input-field w-full px-4 py-3 rounded-xl text-sm appearance-none">
+                                <option value="auto" data-i18n="species_auto">智能适配</option>
+                                <option value="crucian">鲫鱼</option>
+                                <option value="carp">鲤鱼</option>
+                                <option value="grasscarp">草鱼</option>
+                                <option value="silvercarp">鲢鳙</option>
+                                <option value="culter">翘嘴</option>
+                                <option value="perch">鲈鱼</option>
+                                <option value="mandarin">鳜鱼</option>
+                                <option value="snakehead">黑鱼</option>
+                                <option value="tilapia">罗非鱼</option>
+                                <option value="catfish">黄辣丁</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <!-- 实时环境参数 -->
@@ -256,6 +272,8 @@
                 factor_pressure: "气压因素",
                 factor_watertemp: "水温因素",
                 
+                target_species: "目标鱼种",
+                species_auto: "智能适配（通用建议）",
                 expert_advice: "专家建议",
                 loading_map: "正在加载地图数据...",
                 footer_text: "© 2026 钓了么 | 仅供娱乐参考，实际钓鱼请结合当地水情与安全",
@@ -393,6 +411,8 @@
                 factor_wind: "Wind",
                 factor_pressure: "Pressure",
                 factor_watertemp: "Water Temp",
+                target_species: "Target Species",
+                species_auto: "Auto Adapt",
                 expert_advice: "Expert Tips",
                 loading_map: "Loading map data...",
                 footer_text: "© 2026 FishCast | For reference only. Always check local conditions and stay safe.",
@@ -512,6 +532,8 @@
                 factor_wind: "風",
                 factor_pressure: "気圧",
                 factor_watertemp: "水温",
+                target_species: "対象魚種",
+                species_auto: "自動適応",
                 expert_advice: "専門家のアドバイス",
                 loading_map: "マップデータを読み込み中...",
                 footer_text: "© 2026 釣り予報 | 参考情報です。実際の釣りは現地の状況を確認し安全第一で。",
@@ -631,6 +653,8 @@
                 factor_wind: "바람",
                 factor_pressure: "기압",
                 factor_watertemp: "수온",
+                target_species: "대상 어종",
+                species_auto: "자동 적응",
                 expert_advice: "전문가 조언",
                 loading_map: "지도 데이터 로딩 중...",
                 footer_text: "© 2026 낚시예보 | 참고용입니다. 현지 상황을 확인하고 안전에 유의하세요.",
@@ -912,6 +936,121 @@
             return {trend:'falling',text:`气压下降中（${diff.toFixed(1)}hPa），鱼群活性降低，建议等气压稳定再出钓`,arrow:'↓',diff};
         }
         const MONTH_NAMES = ['','一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+
+        // ==================== Phase 2: 鱼种数据库 ====================
+        const FISH_SPECIES = {
+            auto: { name:'智能适配', nameEn:'Auto Adapt', hookSize:'按目标鱼种选择', lineSize:'按目标鱼种选择' },
+            crucian: {
+                name:'鲫鱼', nameEn:'Crucian Carp', optimalTemp:[15,28],
+                depth:'底钓', depthRange:[0.5,4],
+                bait:{normal:'腥香商品饵+红虫+蚯蚓',cold:'浓腥饵+红虫，少量多打',hot:'清淡本味饵+麦粒',rainy:'蚯蚓+浓腥饵'},
+                hook:'袖3-5', line:'主线1.0-1.2/子线0.4-0.8',
+                seasonTips:{spring:'春季产卵期，近岸浅滩水草区(0.5-1.5m)是鲫鱼黄金钓点',summer:'夏季鲫鱼早晚浅滩(1-2m)觅食，中午退至深水(2.5-4m)',autumn:'秋季全天开口，深浅交界处为最佳选择',winter:'冬季扎堆深水区(3-4m)，小钩细线红虫是王道'},
+                posTips:{hot:'水温偏高时躲在阴凉水草下或深水区',cold:'低温期聚集在深坑、深湾处',normal:'选择水草区边缘、深浅交界、倒树旁'},
+                seasonBonus:{spring:10,summer:5,autumn:15,winter:-10}
+            },
+            carp: {
+                name:'鲤鱼', nameEn:'Common Carp', optimalTemp:[20,28],
+                depth:'底钓', depthRange:[1,5],
+                bait:{normal:'发酵玉米+红薯+商品鲤饵',cold:'红虫+虾粉+腥味饵',hot:'嫩玉米+颗粒饵',rainy:'发酵玉米+蚯蚓'},
+                hook:'伊势尼5-8', line:'主线1.5-2.5/子线1.0-1.5',
+                seasonTips:{spring:'春季鲤鱼产卵后急需补食，浅滩水温15°C以上开始活跃',summer:'夏季鲤鱼喜阴，夜钓最佳，白天深水',autumn:'秋季疯狂摄食储备脂肪，全天可钓',winter:'冬季鲤鱼活力大减，深水区蹲守'},
+                posTips:{hot:'水温高时躲在深水区或树荫下',cold:'低温期聚集在深坑、主河道',normal:'选择泥底、陡坡、水下坎处'},
+                seasonBonus:{spring:10,summer:0,autumn:15,winter:-15}
+            },
+            grasscarp: {
+                name:'草鱼', nameEn:'Grass Carp', optimalTemp:[22,30],
+                depth:'浮钓/中上层', depthRange:[0.5,3],
+                bait:{normal:'嫩草+玉米+商品草鱼饵',cold:'不活跃，建议换目标鱼种',hot:'青草+玉米+芦苇芯',rainy:'嫩草+蚂蚱'},
+                hook:'伊势尼6-10', line:'主线2.0-3.0/子线1.5-2.0',
+                seasonTips:{spring:'水温20°C以上草鱼才开始活跃，浅滩水草区',summer:'夏季草鱼最活跃的季节，全天可钓，尤其雨后',autumn:'秋季草鱼仍活跃，近岸水草区+浮钓',winter:'草鱼基本停食，不建议冬季作钓'},
+                posTips:{hot:'高温时在中上层活动，找水草区',cold:'低温时沉底，极难开口',normal:'水草区边缘、进水口、芦苇丛旁'},
+                seasonBonus:{spring:0,summer:20,autumn:10,winter:-30}
+            },
+            silvercarp: {
+                name:'鲢鳙', nameEn:'Silver/Bighead Carp', optimalTemp:[22,32],
+                depth:'浮钓/中上层', depthRange:[0.5,2],
+                bait:{normal:'酸臭饵+蒜粉+商品鲢鳙饵',cold:'不活跃，不建议作钓',hot:'酸臭味雾化饵+雪花粉',rainy:'雾化快的酸臭饵'},
+                hook:'千又2-4', line:'主线2.0-3.0/子线1.5-2.0',
+                seasonTips:{spring:'水温25°C以上鲢鳙才开始活跃',summer:'盛夏是钓鲢鳙黄金期，高温时段反而好钓',autumn:'秋初仍可钓，秋末停口',winter:'完全停食'},
+                posTips:{hot:'高温时在中上层活动，找开阔水面',cold:'低温停食',normal:'选择深水区开阔水面，雾化诱鱼'},
+                seasonBonus:{spring:-10,summer:20,autumn:0,winter:-40}
+            },
+            culter: {
+                name:'翘嘴', nameEn:'Topmouth Culter', optimalTemp:[18,28],
+                depth:'浮钓/中上层', depthRange:[0.3,3],
+                bait:{normal:'活虾+小鱼+拟饵',cold:'红虫+细条鱼饵',hot:'活虾+水面系拟饵',rainy:'活饵+亮片拟饵'},
+                hook:'千又1-3/曲柄钩', line:'主线1.2-2.0/子线0.8-1.2',
+                seasonTips:{spring:'春季翘嘴在浅滩产卵后疯狂进食',summer:'夏季早晚窗口期爆口，路亚最佳季节',autumn:'秋季全天可钓，是钓翘嘴的黄金季节',winter:'深水区慢拖，活性较低'},
+                posTips:{hot:'高温时早晚在浅水区追小鱼',cold:'深水区慢拖搜索',normal:'选择大水面陡坡、岛屿周边、进出水口'},
+                seasonBonus:{spring:5,summer:10,autumn:20,winter:-5}
+            },
+            perch: {
+                name:'鲈鱼', nameEn:'Perch', optimalTemp:[18,26],
+                depth:'底钓/中下层', depthRange:[1,6],
+                bait:{normal:'活虾+小鱼+软虫拟饵',cold:'红虫+慢拖软虫',hot:'活饵+水面系',rainy:'活虾+卷尾蛆'},
+                hook:'曲柄钩3-5', line:'主线1.5-2.5/子线1.0-1.5',
+                seasonTips:{spring:'春季产卵前后鲈鱼最活跃',summer:'夏季早晚窗口期，找结构区',autumn:'秋季疯狂摄食，好钓',winter:'深水区，活性降低'},
+                posTips:{hot:'躲在深水结构区或桥墩阴影下',cold:'深水慢拖',normal:'找水下结构、乱石堆、陡坡'},
+                seasonBonus:{spring:15,summer:10,autumn:15,winter:-5}
+            },
+            mandarin: {
+                name:'鳜鱼', nameEn:'Mandarin Fish', optimalTemp:[20,28],
+                depth:'底钓', depthRange:[1,8],
+                bait:{normal:'活虾+活泥鳅+软虫',cold:'活饵慢拖',hot:'活虾+Vib',rainy:'活泥鳅+亮片'},
+                hook:'曲柄钩2-4', line:'主线1.5-2.0/子线1.0-1.5',
+                seasonTips:{spring:'春季鳜鱼产卵前后在浅滩活动',summer:'夏季早晚在流水口、乱石堆捕食',autumn:'秋季是钓鳜鱼最佳季节',winter:'深水区，活性极低'},
+                posTips:{hot:'躲在桥墩、乱石堆、陡坡阴影下',cold:'深水区',normal:'选择流水口、乱石区、水下陡坡'},
+                seasonBonus:{spring:10,summer:10,autumn:20,winter:-20}
+            },
+            snakehead: {
+                name:'黑鱼', nameEn:'Snakehead', optimalTemp:[22,30],
+                depth:'浮钓/中上层', depthRange:[0.2,2],
+                bait:{normal:'雷蛙+活鱼+泥鳅',cold:'不活跃',hot:'雷蛙+水面系',rainy:'活饵+雷蛙'},
+                hook:'雷强钩', line:'主线3.0-5.0(PE线)',
+                seasonTips:{spring:'水温18°C以上黑鱼才开始活动',summer:'夏季是钓黑鱼黄金期，雷蛙最佳',autumn:'秋季仍可钓，但活性逐渐降低',winter:'黑鱼冬眠，不建议作钓'},
+                posTips:{hot:'藏在浮萍水草下或荷花丛中',cold:'冬眠',normal:'水草丛、浮萍区、荷花塘'},
+                seasonBonus:{spring:0,summer:25,autumn:5,winter:-40}
+            },
+            tilapia: {
+                name:'罗非鱼', nameEn:'Tilapia', optimalTemp:[24,32],
+                depth:'底钓/中下层', depthRange:[0.5,3],
+                bait:{normal:'肝味饵+虾粉+商品罗非饵',cold:'不活跃',hot:'肝味饵+蚯蚓+福寿饵',rainy:'腥味饵+蚯蚓'},
+                hook:'袖5-7', line:'主线1.2-2.0/子线0.8-1.2',
+                seasonTips:{spring:'水温25°C以上罗非才活跃',summer:'盛夏是罗非黄金期，高温反而好钓',autumn:'秋初可钓，秋末水温低于20°C停口',winter:'低温停食'},
+                posTips:{hot:'高温在上层活动，找浅滩',cold:'不活跃',normal:'浅滩、近岸、水草区'},
+                seasonBonus:{spring:-5,summer:25,autumn:5,winter:-40}
+            },
+            catfish: {
+                name:'黄辣丁', nameEn:'Yellow Catfish', optimalTemp:[20,28],
+                depth:'底钓', depthRange:[1,5],
+                bait:{normal:'蚯蚓+鸡肝+腥味商品饵',cold:'红虫+蚯蚓',hot:'蚯蚓+鸡肝+腥味饵',rainy:'蚯蚓最佳'},
+                hook:'伊豆4-6', line:'主线1.0-1.5/子线0.6-1.0',
+                seasonTips:{spring:'水温15°C以上开始活动',summer:'夏季夜钓黄辣丁黄金期',autumn:'秋季黄昏窗口好',winter:'冬眠'},
+                posTips:{hot:'躲在深水区或桥墩阴影处',cold:'冬眠',normal:'流水缓流区、乱石底、进水口'},
+                seasonBonus:{spring:5,summer:20,autumn:5,winter:-40}
+            }
+        };
+        function getSpecies(id) { return FISH_SPECIES[id] || FISH_SPECIES.auto; }
+        function calcSpeciesScore(species, waterTemp, month, lat) {
+            if(!species || species === FISH_SPECIES.auto) return NaN;
+            const season = getSeason(month, lat);
+            const bonus = species.seasonBonus?.[season] || 0;
+            const [tLow, tHigh] = species.optimalTemp || [0, 50];
+            let tempScore = 100;
+            if(waterTemp < tLow) tempScore = Math.max(0, 50 + (waterTemp - tLow) * 5);
+            if(waterTemp > tHigh) tempScore = Math.max(0, 50 - (waterTemp - tHigh) * 5);
+            return Math.round((tempScore + bonus) / 2);
+        }
+        function getBaitForSpecies(species, weatherCode, waterTemp) {
+            if(!species || species === FISH_SPECIES.auto) return null;
+            const b = species.bait;
+            if(!b) return null;
+            if(waterTemp < 10) return b.cold || b.normal;
+            if(waterTemp > 30) return b.hot || b.normal;
+            if(weatherCode >= 61 && weatherCode <= 65) return b.rainy || b.normal;
+            return b.normal;
+        }
         // ==================== 高德地图API ====================
         async function getCoords(name) {
             try {
@@ -1118,7 +1257,7 @@
         }
 
         // ==================== 专家建议生成 ====================
-        function generateExpertTips(weatherCode, windLevel, waterTemp, isSaltwater, tempDiffData, pressureTrend, moonPhase, season) {
+        function generateExpertTips(weatherCode, windLevel, waterTemp, isSaltwater, tempDiffData, pressureTrend, moonPhase, season, fishSpecies) {
             const tips = [];
             const { singleDayMax } = tempDiffData || {};
             
@@ -1162,9 +1301,50 @@
                 tips.push(t('tip_bait_normal'));
             }
             
-            // Phase 1: season insight
-            if(season && SEASON_TIPS[season]) {
+            // Phase 2: species-specific seasonal insight
+            if(season && fishSpecies && fishSpecies.seasonTips && fishSpecies.seasonTips[season] && fishSpecies !== FISH_SPECIES.auto) {
+                tips.push('<span class="text-emerald-400 font-semibold"><i class="fas fa-fish"></i> ' + fishSpecies.name + ' · ' + SEASON_NAMES[season] + '：</span>' + fishSpecies.seasonTips[season]);
+            } else if(season && SEASON_TIPS[season]) {
                 tips.push('<span class="text-emerald-400 font-semibold"><i class="fas fa-calendar"></i> ' + SEASON_NAMES[season] + '：</span>' + SEASON_TIPS[season]);
+            }
+            // Phase 2: species-specific position tip
+            if(fishSpecies && fishSpecies.posTips && fishSpecies !== FISH_SPECIES.auto) {
+                let posKey = 'normal';
+                if(waterTemp > 28) posKey = 'hot';
+                else if(waterTemp < 12) posKey = 'cold';
+                else if(windLevel >= 5) posKey = 'windy';
+                else if(weatherCode >= 61 && weatherCode <= 65) posKey = 'rainy';
+                const posText = fishSpecies.posTips[posKey] || fishSpecies.posTips.normal;
+                if(posText) tips.push('<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> ' + fishSpecies.name + '钓位：</span>' + posText);
+            } else {
+                if(windLevel >= 5) tips.push(t('tip_pos_windy'));
+                else if(weatherCode >= 61 && weatherCode <= 65) tips.push(t('tip_pos_rainy'));
+                else if(waterTemp > 28) tips.push(t('tip_pos_hot'));
+                else if(waterTemp < 12) tips.push(t('tip_pos_cold'));
+                else tips.push(t('tip_pos_normal'));
+            }
+            // Phase 2: species-specific bait & depth/tackle
+            if(fishSpecies && fishSpecies !== FISH_SPECIES.auto) {
+                const speciesBait = getBaitForSpecies(fishSpecies, weatherCode, waterTemp);
+                if(speciesBait) {
+                    tips.push('<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> ' + fishSpecies.name + '饵料：</span>' + speciesBait);
+                } else {
+                    if(weatherCode >= 61 && weatherCode <= 65) tips.push(t('tip_bait_rainy'));
+                    else if(windLevel >= 4) tips.push(t('tip_bait_windy'));
+                    else if(waterTemp > 25) tips.push(t('tip_bait_hot'));
+                    else tips.push(t('tip_bait_normal'));
+                }
+                tips.push('<span class="text-cyan-400 font-semibold"><i class="fas fa-water"></i> ' + fishSpecies.name + '钓法：</span>钓' + (fishSpecies.depth || '底') + '，水深' + fishSpecies.depthRange[0] + '-' + fishSpecies.depthRange[1] + '米');
+                tips.push('<span class="text-slate-300 font-semibold"><i class="fas fa-screwdriver-wrench"></i> 线组建议：</span>' + fishSpecies.hook + '钩 + ' + fishSpecies.line);
+            } else {
+                if(weatherCode >= 61 && weatherCode <= 65) tips.push(t('tip_bait_rainy'));
+                else if(windLevel >= 4) tips.push(t('tip_bait_windy'));
+                else if(waterTemp > 25) tips.push(t('tip_bait_hot'));
+                else tips.push(t('tip_bait_normal'));
+                if(waterTemp < 12) tips.push(t('tip_depth_cold'));
+                else if(waterTemp > 28) tips.push(t('tip_depth_hot'));
+                else if(windLevel >= 5) tips.push(t('tip_depth_windy'));
+                else tips.push(t('tip_depth_normal'));
             }
             // Phase 1: moon phase
             if(moonPhase && moonPhase.name) {
@@ -1274,7 +1454,13 @@
                 const season = getSeason(dt.getMonth() + 1, lat);
                 const moonPhase = calculateMoonPhase(dt);
                 const pressureTrend = getPressureTrend(weatherData.hourlyPressure);
-                const tips = generateExpertTips(weatherData.weatherCode, wind, wt, $('fishing-type').value==='saltwater', tempDiffData, pressureTrend, moonPhase, season);
+                const fishSpeciesId = ($('fish-species') ? $('fish-species').value : 'auto');
+                const fishSpecies = getSpecies(fishSpeciesId);
+                const speciesScore = calcSpeciesScore(fishSpecies, wt, dt.getMonth() + 1, lat);
+                if(fishSpeciesId !== 'auto' && !isNaN(speciesScore) && speciesScore > 0) {
+                    total = Math.round(total * 0.7 + speciesScore * 0.3);
+                }
+                const tips = generateExpertTips(weatherData.weatherCode, wind, wt, $('fishing-type').value==='saltwater', tempDiffData, pressureTrend, moonPhase, season, fishSpecies);
                 $('expert-tips').innerHTML = tips.map(t=>`<div class="expert-tip-item">${t}</div>`).join('');
             } catch(e){
                 handleApiError(e, '预测');
