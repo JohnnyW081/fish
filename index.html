@@ -872,7 +872,46 @@
         function calculateWindScore(level) { return level<=2?90:level<=4?75:level<=5?50:level<=6?30:15; }
         function calculatePressureScore(p) { return p>=1015&&p<=1025?95:p>=1005?85:p>1025&&p<=1035?70:p>=995?60:p<995?30:40; }
         function calculateWaterTempScore(t) { return t>=18&&t<=25?95:t>=15?85:t>25&&t<=28?75:t>=10?60:(t<10||t>28)?20:40; }
-        
+
+        // ==================== Phase 1: 数据增强 ====================
+        const SEASON_NAMES = {spring:'春季',summer:'夏季',autumn:'秋季',winter:'冬季'};
+        const SEASON_TIPS = {
+            spring:'鱼类进入产卵期，浅滩水温回升快，建议近岸浅水区作钓',
+            summer:'高温季节，鱼类趋深趋阴，建议早晚出钓避开正午暴晒',
+            autumn:'秋季育肥期，鱼类摄食活跃，全天均可出钓',
+            winter:'水温低，鱼群集中深水区越冬，建议午间出钓，钓深3米以上'
+        };
+        function getSeason(month, lat) {
+            const isNorth = lat >= 0;
+            if(isNorth) return month>=3&&month<=5?'spring':month>=6&&month<=8?'summer':month>=9&&month<=11?'autumn':'winter';
+            return month>=3&&month<=5?'autumn':month>=6&&month<=8?'winter':month>=9&&month<=11?'spring':'summer';
+        }
+        function calculateMoonPhase(date) {
+            const y=date.getFullYear(), m=date.getMonth()+1, d=date.getDate();
+            let a=Math.floor((14-m)/12), yy=y+4800-a, mm=m+12*a-3;
+            const jd = d+Math.floor((153*mm+2)/5)+365*yy+Math.floor(yy/4)-Math.floor(yy/100)+Math.floor(yy/400)-32045;
+            const days = jd - 2451549.5;
+            const phase = days/29.53058867 - Math.floor(days/29.53058867);
+            const idx = Math.round(phase*8)%8;
+            const names = ['🌑 新月','🌒 蛾眉月','🌓 上弦月','🌔 盈凸月','🌕 满月','🌖 亏凸月','🌗 下弦月','🌘 残月'];
+            const tips = {
+                0:'新月光线暗，大鱼警惕性低，白天可钓深水区',
+                2:'上弦月，傍晚至午夜为最佳窗口期',
+                4:'满月前后，夜间光线充足，夜钓效果极佳',
+                6:'下弦月，清晨窗口好'
+            };
+            return {idx, name:names[idx], illumination:Math.round(Math.abs(Math.sin(Math.PI*phase))*100), tip:tips[idx]||'月相正常，按常规出钓'};
+        }
+        function getPressureTrend(hourlyP) {
+            if(!hourlyP||hourlyP.length<6) return {trend:'unknown',text:'',arrow:'',diff:0};
+            const recent = hourlyP.slice(-3).reduce((a,b)=>a+b,0)/3;
+            const earlier = hourlyP.slice(-6,-3).reduce((a,b)=>a+b,0)/3;
+            const diff = recent - earlier;
+            if(Math.abs(diff)<1.5) return {trend:'stable',text:'气压平稳（变化<1.5hPa），鱼类活动正常',arrow:'→',diff};
+            if(diff>0) return {trend:'rising',text:`气压上升中（+${diff.toFixed(1)}hPa），溶氧增加，鱼群活跃度高`,arrow:'↑',diff};
+            return {trend:'falling',text:`气压下降中（${diff.toFixed(1)}hPa），鱼群活性降低，建议等气压稳定再出钓`,arrow:'↓',diff};
+        }
+        const MONTH_NAMES = ['','一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
         // ==================== 高德地图API ====================
         async function getCoords(name) {
             try {
@@ -907,20 +946,23 @@
         
         async function fetchWeather(lat, lon) {
             try {
-                const url = `${OPENMETEO_BASE}?latitude=${lat}&longitude=${lon}&current=pressure_msl,weather_code,temperature_2m,wind_speed_10m,wind_direction_10m&timezone=auto`;
+                const url = `${OPENMETEO_BASE}?latitude=${lat}&longitude=${lon}&current=pressure_msl,weather_code,temperature_2m,wind_speed_10m,wind_direction_10m&hourly=pressure_msl&past_hours=12&forecast_hours=1&timezone=auto`;
                 const res = await fetch(url);
                 if(!res.ok) throw new Error('天气API失败');
-                const {current} = await res.json();
+                const data = await res.json();
+                const {current, hourly} = data;
+                const hourlyP = hourly?.pressure_msl?.filter(v=>v!==null) || [];
                 return {
                     pressure: Math.round(current.pressure_msl),
                     weatherCode: current.weather_code,
                     waterTemp: Math.max(5, Math.min(35, Math.round(current.temperature_2m + 2))),
                     windSpeed: current.wind_speed_10m,
-                    windDir: current.wind_direction_10m
+                    windDir: current.wind_direction_10m,
+                    hourlyPressure: hourlyP
                 };
             } catch(e){
                 handleApiError(e,'天气');
-                return {pressure:1013, weatherCode:3, waterTemp:20, windSpeed:3, windDir:0};
+                return {pressure:1013, weatherCode:3, waterTemp:20, windSpeed:3, windDir:0, hourlyPressure:[]};
             }
         }
         
@@ -1076,7 +1118,7 @@
         }
 
         // ==================== 专家建议生成 ====================
-        function generateExpertTips(weatherCode, windLevel, waterTemp, isSaltwater, tempDiffData) {
+        function generateExpertTips(weatherCode, windLevel, waterTemp, isSaltwater, tempDiffData, pressureTrend, moonPhase, season) {
             const tips = [];
             const { singleDayMax } = tempDiffData || {};
             
@@ -1120,6 +1162,19 @@
                 tips.push(t('tip_bait_normal'));
             }
             
+            // Phase 1: season insight
+            if(season && SEASON_TIPS[season]) {
+                tips.push('<span class="text-emerald-400 font-semibold"><i class="fas fa-calendar"></i> ' + SEASON_NAMES[season] + '：</span>' + SEASON_TIPS[season]);
+            }
+            // Phase 1: moon phase
+            if(moonPhase && moonPhase.name) {
+                tips.push('<span class="text-indigo-400 font-semibold">' + moonPhase.name + '</span> ' + (moonPhase.tip || '月相正常，按常规出钓'));
+            }
+            // Phase 1: pressure trend
+            if(pressureTrend && pressureTrend.text) {
+                const trendColors = {rising:'text-emerald-400',falling:'text-rose-400',stable:'text-slate-300'};
+                tips.push('<span class="' + (trendColors[pressureTrend.trend]||'text-slate-300') + ' font-semibold"><i class="fas fa-gauge-high"></i> ' + pressureTrend.arrow + ' 气压趋势：</span> ' + pressureTrend.text);
+            }
             if(isSaltwater) {
                 tips.push(t('tip_saltwater'));
             }
@@ -1131,7 +1186,8 @@
             if(!currentCoords) return;
             try {
                 const data = await fetchWeather(currentCoords.lat, currentCoords.lon);
-                $('pressure-value').textContent = data.pressure;
+                const pTrend = getPressureTrend(data.hourlyPressure);
+                $('pressure-value').innerHTML = data.pressure + ` <span class="text-xs ${pTrend.trend==='rising'?'text-emerald-400':pTrend.trend==='falling'?'text-rose-400':'text-slate-400'}">${pTrend.arrow}</span>`;
                 updateWeatherText(data.weatherCode);
                 $('water-temp-value').textContent = data.waterTemp;
                 updateWindDisplay(data.windSpeed, data.windDir);
@@ -1215,7 +1271,10 @@
                 updateProgress('pressure', baseScores.pressure);
                 updateProgress('water-temp', baseScores.waterTemp);
 
-                const tips = generateExpertTips(weatherData.weatherCode, wind, wt, $('fishing-type').value==='saltwater', tempDiffData);
+                const season = getSeason(dt.getMonth() + 1, lat);
+                const moonPhase = calculateMoonPhase(dt);
+                const pressureTrend = getPressureTrend(weatherData.hourlyPressure);
+                const tips = generateExpertTips(weatherData.weatherCode, wind, wt, $('fishing-type').value==='saltwater', tempDiffData, pressureTrend, moonPhase, season);
                 $('expert-tips').innerHTML = tips.map(t=>`<div class="expert-tip-item">${t}</div>`).join('');
             } catch(e){
                 handleApiError(e, '预测');
