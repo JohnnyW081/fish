@@ -1440,12 +1440,16 @@
         async function syncEnvData() {
             if(!currentCoords) return;
             try {
-                const data = await fetchWeather(currentCoords.lat, currentCoords.lon);
-                const pTrend = getPressureTrend(data.hourlyPressure);
-                $('pressure-value').innerHTML = data.pressure + ` <span class="text-xs ${pTrend.trend==='rising'?'text-emerald-400':pTrend.trend==='falling'?'text-rose-400':'text-slate-400'}">${pTrend.arrow}</span>`;
-                updateWeatherText(data.weatherCode);
-                $('water-temp-value').textContent = data.waterTemp;
-                updateWindDisplay(data.windSpeed, data.windDir);
+                const [weatherData, tempDiffData] = await Promise.all([
+                    fetchWeather(currentCoords.lat, currentCoords.lon),
+                    fetchWeeklyTempDiff(currentCoords.lat, currentCoords.lon)
+                ]);
+                const pTrend = getPressureTrend(weatherData.hourlyPressure);
+                $('pressure-value').innerHTML = weatherData.pressure + ` <span class="text-xs ${pTrend.trend==='rising'?'text-emerald-400':pTrend.trend==='falling'?'text-rose-400':'text-slate-400'}">${pTrend.arrow}</span>`;
+                updateWeatherText(weatherData.weatherCode);
+                $('water-temp-value').textContent = weatherData.waterTemp;
+                updateWindDisplay(weatherData.windSpeed, weatherData.windDir);
+                updateTempDiffUI(tempDiffData);
             } catch {}
         }
         
