@@ -771,12 +771,17 @@
                     // 纯文本元素直接替换
                     el.innerHTML = t(key);
                 } else {
-                    // 含子元素的，只替换文本节点
-                    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
-                    let node;
-                    while (node = walker.nextNode()) {
-                        if (node.parentElement && node.parentElement.getAttribute('data-i18n') === key) {
-                            node.textContent = t(key);
+                    // 含子元素的：如果翻译字符串包含HTML标签则用innerHTML，否则只替换文本节点
+                    const transVal = t(key);
+                    if (transVal.indexOf('<') !== -1 && transVal.indexOf('>') !== -1) {
+                        el.innerHTML = transVal;
+                    } else {
+                        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+                        let node;
+                        while (node = walker.nextNode()) {
+                            if (node.parentElement && node.parentElement.getAttribute('data-i18n') === key) {
+                                node.textContent = transVal;
+                            }
                         }
                     }
                 }
@@ -813,6 +818,13 @@
             currentLang = lang;
             localStorage.setItem('fishcast_lang', lang);
             applyTranslations();
+            // 恢复 location-display（applyTranslations 内 innerHTML 会重置它）
+            if (currentCoords) {
+                const display = document.getElementById('location-display');
+                if (display && display.textContent === '--') {
+                    display.textContent = localStorage.getItem('lastLocationName') || t('label_custom');
+                }
+            }
             // 重新计算预测结果中的文字（如果有结果显示）
             const scoreEl = document.getElementById('score');
             if (scoreEl && scoreEl.textContent !== '--') {
@@ -1199,9 +1211,11 @@
                 const address = await reverseGeocode(lat, lng);
                 $('location').value = address;
                 $('location-display').textContent = address;
+                localStorage.setItem('lastLocationName', address);
             } catch (e) {
                 $('location').value = `${lat.toFixed(2)}, ${lng.toFixed(2)}`;
                 $('location-display').textContent = t('label_custom');
+                localStorage.setItem('lastLocationName', t('label_custom'));
             }
             
             currentCoords = { lat, lon: lng };
@@ -1269,38 +1283,7 @@
                 tips.push(t('tip_temp_low'));
             }
 
-            if(windLevel >= 5) {
-                tips.push(t('tip_pos_windy'));
-            } else if(weatherCode >= 61 && weatherCode <= 65) {
-                tips.push(t('tip_pos_rainy'));
-            } else if(waterTemp > 28) {
-                tips.push(t('tip_pos_hot'));
-            } else if(waterTemp < 12) {
-                tips.push(t('tip_pos_cold'));
-            } else {
-                tips.push(t('tip_pos_normal'));
-            }
 
-            if(waterTemp < 12) {
-                tips.push(t('tip_depth_cold'));
-            } else if(waterTemp > 28) {
-                tips.push(t('tip_depth_hot'));
-            } else if(windLevel >= 5) {
-                tips.push(t('tip_depth_windy'));
-            } else {
-                tips.push(t('tip_depth_normal'));
-            }
-            
-            if(weatherCode >= 61 && weatherCode <= 65) {
-                tips.push(t('tip_bait_rainy'));
-            } else if(windLevel >= 4) {
-                tips.push(t('tip_bait_windy'));
-            } else if(waterTemp > 25) {
-                tips.push(t('tip_bait_hot'));
-            } else {
-                tips.push(t('tip_bait_normal'));
-            }
-            
             // Phase 2: species-specific seasonal insight
             if(season && fishSpecies && fishSpecies.seasonTips && fishSpecies.seasonTips[season] && fishSpecies !== FISH_SPECIES.auto) {
                 tips.push('<span class="text-emerald-400 font-semibold"><i class="fas fa-fish"></i> ' + fishSpecies.name + ' · ' + SEASON_NAMES[season] + '：</span>' + fishSpecies.seasonTips[season]);
@@ -1483,7 +1466,7 @@
             if(savedLat && savedLon) {
                 currentCoords = { lat: parseFloat(savedLat), lon: parseFloat(savedLon) };
                 updateMapMarker(currentCoords.lat, currentCoords.lon);
-                $('location-display').textContent = t('label_history');
+                $('location-display').textContent = localStorage.getItem('lastLocationName') || t('label_history');
                 syncEnvData();
                 $('expert-tips').innerHTML = "<p>" + t('restored_data') + "</p>";
             }
@@ -1501,6 +1484,7 @@
                     currentCoords = coords;
                     localStorage.setItem('lastLat', coords.lat);
                     localStorage.setItem('lastLon', coords.lon);
+                    localStorage.setItem('lastLocationName', v);
                     
                     $('location-display').textContent = v;
                     updateMapMarker(coords.lat, coords.lon);
@@ -1531,6 +1515,7 @@
                     currentCoords = {lat:pos.coords.latitude, lon:pos.coords.longitude};
                     $('location').value = await reverseGeocode(currentCoords.lat, currentCoords.lon);
                     $('location-display').textContent = t('label_gps');
+                    localStorage.setItem('lastLocationName', $('location').value);
                     updateMapMarker(currentCoords.lat, currentCoords.lon);
                     localStorage.setItem('lastLat', currentCoords.lat);
                     localStorage.setItem('lastLon', currentCoords.lon);
