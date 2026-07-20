@@ -944,6 +944,7 @@
         const AMAP_GEOCODE_BASE = 'https://restapi.amap.com/v3/geocode/geo';
         const AMAP_REVERSE_GEOCODE_BASE = 'https://restapi.amap.com/v3/geocode/regeo';
         const OPENMETEO_BASE = 'https://api.open-meteo.com/v1/forecast';
+        const MARINE_BASE = 'https://marine-api.open-meteo.com/v1/marine';
         
         // ==================== 工具函数 ====================
         const $ = id => document.getElementById(id);
@@ -1243,6 +1244,58 @@
             }
         }
 
+        // 获取水温（优先海表温度SST，内陆回退到气温+2°C估算）
+        async function fetchWaterTemp(lat, lon) {
+            try {
+                const url = `${MARINE_BASE}?latitude=${lat}&longitude=${lon}&current=sea_surface_temperature&timezone=auto&forecast_days=1`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.current?.sea_surface_temperature !== null && data.current?.sea_surface_temperature !== undefined) {
+                    return Math.round(data.current.sea_surface_temperature);
+                }
+                throw new Error('no sst');
+            } catch {
+                // 内陆：回退到现有气温+2°C估算
+                try {
+                    const w = await fetchWeather(lat, lon);
+                    return w.waterTemp;
+                } catch {
+                    return 20;
+                }
+            }
+        }
+
+        // 获取一周水温波动（优先海表温度，内陆回退到气温数据）
+        async function fetchWeeklyWaterTempDiff(lat, lon) {
+            try {
+                const url = `${MARINE_BASE}?latitude=${lat}&longitude=${lon}&daily=sea_surface_temperature_max,sea_surface_temperature_min,sea_surface_temperature_mean&timezone=auto&forecast_days=7`;
+                const res = await fetch(url);
+                const {daily} = await res.json();
+                if (daily && daily.sea_surface_temperature_max && daily.sea_surface_temperature_max[0] !== null) {
+                    const maxSST = daily.sea_surface_temperature_max;
+                    const minSST = daily.sea_surface_temperature_min;
+                    let maxSingleDayDiff = 0;
+                    let totalWeeklyDiff = 0;
+                    const days = maxSST.length;
+                    for (let i = 0; i < days; i++) {
+                        const diff = maxSST[i] - minSST[i];
+                        if (diff > maxSingleDayDiff) maxSingleDayDiff = diff;
+                        totalWeeklyDiff += diff;
+                    }
+                    return {
+                        singleDayMax: Math.round(maxSingleDayDiff),
+                        weeklyAvgDiff: Math.round(totalWeeklyDiff / days),
+                        source: 'sst',
+                        raw: { maxTemps: maxSST, minTemps: minSST }
+                    };
+                }
+                throw new Error('no sst daily');
+            } catch {
+                // 内陆：回退到气温温差
+                return fetchWeeklyTempDiff(lat, lon);
+            }
+        }
+
         // ==================== 地图逻辑 ====================
         let map;
         let marker;
@@ -1440,14 +1493,15 @@
         async function syncEnvData() {
             if(!currentCoords) return;
             try {
-                const [weatherData, tempDiffData] = await Promise.all([
+                const [weatherData, waterTemp, tempDiffData] = await Promise.all([
                     fetchWeather(currentCoords.lat, currentCoords.lon),
-                    fetchWeeklyTempDiff(currentCoords.lat, currentCoords.lon)
+                    fetchWaterTemp(currentCoords.lat, currentCoords.lon),
+                    fetchWeeklyWaterTempDiff(currentCoords.lat, currentCoords.lon)
                 ]);
                 const pTrend = getPressureTrend(weatherData.hourlyPressure);
                 $('pressure-value').innerHTML = weatherData.pressure + ` <span class="text-xs ${pTrend.trend==='rising'?'text-emerald-400':pTrend.trend==='falling'?'text-rose-400':'text-slate-400'}">${pTrend.arrow}</span>`;
                 updateWeatherText(weatherData.weatherCode);
-                $('water-temp-value').textContent = weatherData.waterTemp;
+                $('water-temp-value').textContent = waterTemp;
                 updateWindDisplay(weatherData.windSpeed, weatherData.windDir);
                 updateTempDiffUI(tempDiffData);
             } catch {}
@@ -1474,14 +1528,15 @@
                     throw new Error(t('err_no_location'));
                 }
                 
-                const [weatherData, tempDiffData] = await Promise.all([
+                const [weatherData, waterTemp, tempDiffData] = await Promise.all([
                     fetchWeather(lat, lon).catch(()=> ({pressure:1013, weatherCode:3, waterTemp:20, windSpeed:3, windDir:0})),
-                    fetchWeeklyTempDiff(lat, lon)
+                    fetchWaterTemp(lat, lon),
+                    fetchWeeklyWaterTempDiff(lat, lon)
                 ]);
 
                 $('pressure-value').textContent = weatherData.pressure;
                 updateWeatherText(weatherData.weatherCode);
-                $('water-temp-value').textContent = weatherData.waterTemp;
+                $('water-temp-value').textContent = waterTemp;
                 const windInfo = windSpeedToLevel(weatherData.windSpeed);
                 $('wind-level').textContent = t('wind_level', {level: windInfo.level, text: windInfo.text});
                 $('wind-direction').textContent = windDirectionToText(weatherData.windDir);
@@ -1492,7 +1547,7 @@
                 if(isNaN(dt.getTime())) throw new Error(t('err_select_time'));
                 const hour = dt.getHours();
                 const p = weatherData.pressure;
-                const wt = weatherData.waterTemp;
+                const wt = waterTemp;
                 const wind = windInfo.level;
                 
                 const baseScores = {
