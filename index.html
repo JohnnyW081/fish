@@ -1390,7 +1390,7 @@
                 else if(windLevel >= 5) posKey = 'windy';
                 else if(weatherCode >= 61 && weatherCode <= 65) posKey = 'rainy';
                 const posText = fishSpecies.posTips[posKey] || fishSpecies.posTips.normal;
-                if(posText) tips.push('<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> ' + fishSpecies.name + t('tip_label_position')</span>' + posText);
+                if(posText) tips.push('<span class="text-pink-400 font-semibold"><i class="fas fa-map-marker-alt"></i> ' + fishSpecies.name + t('tip_label_position') + '</span>' + posText);
             } else {
                 if(windLevel >= 5) tips.push(t('tip_pos_windy'));
                 else if(weatherCode >= 61 && weatherCode <= 65) tips.push(t('tip_pos_rainy'));
@@ -1402,7 +1402,7 @@
             if(fishSpecies && fishSpecies !== FISH_SPECIES.auto) {
                 const speciesBait = getBaitForSpecies(fishSpecies, weatherCode, waterTemp);
                 if(speciesBait) {
-                    tips.push('<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> ' + fishSpecies.name + t('tip_label_bait')</span>' + speciesBait);
+                    tips.push('<span class="text-yellow-400 font-semibold"><i class="fas fa-bacon"></i> ' + fishSpecies.name + t('tip_label_bait') + '</span>' + speciesBait);
                 } else {
                     if(weatherCode >= 61 && weatherCode <= 65) tips.push(t('tip_bait_rainy'));
                     else if(windLevel >= 4) tips.push(t('tip_bait_windy'));
